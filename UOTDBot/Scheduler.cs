@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using GBX.NET.Engines.Game;
 using GBX.NET;
 using GBX.NET.LZO;
+using ManiaAPI.NadeoAPI;
 
 namespace UOTDBot;
 public interface IScheduler
@@ -35,7 +36,16 @@ internal sealed class Scheduler : BackgroundService, IScheduler
     {
         // ... something every second ...
 
-        Console.WriteLine("< Start Program.Main");
+        // 04/01/2024 NadeoLiveService initialization and fectching the TOTD. I think...
+        NadeoLiveServices nls = new NadeoLiveServices(true);
+        int length = 1;
+        int offset = 0;
+        TrackOfTheDayCollection TOTDCollection = nls.GetTrackOfTheDaysAsync(length, offset, false, default);
+        TOTDCollection.Deconstruct(TOTDMonth, NextRequestTimestamp, RelativeNextRequest);
+        TOTDMonth.Deconstruct(Year, Month, LastDay, TOTDList, Media);
+        String mapUid = TOTDList[0].mapUid;
+
+        // TODO: wth do you do with that now
 
         // 02/01/2024 before NadeoAPI is set up
         String filepath = "C:\\Users\\STRpo\\Documents\\coding\\MapParsing\\maps\\cotd.Map.Gbx";
@@ -60,7 +70,7 @@ internal sealed class Scheduler : BackgroundService, IScheduler
             Console.WriteLine("nothing");
         }
 
-        Console.WriteLine("> End Program.Main");
+        
 
         return Task.CompletedTask;
     }

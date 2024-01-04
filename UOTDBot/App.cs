@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using ManiaAPI.NadeoAPI;
 
 namespace UOTDBot;
 internal static class App
