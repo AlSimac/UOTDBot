@@ -4,6 +4,8 @@ using GBX.NET.Engines.Game;
 using GBX.NET;
 using GBX.NET.LZO;
 using ManiaAPI.NadeoAPI;
+using static System.Net.WebRequestMethods;
+using System.Net;
 
 namespace UOTDBot;
 public interface IScheduler
@@ -36,21 +38,36 @@ internal sealed class Scheduler : BackgroundService, IScheduler
     {
         // ... something every second ...
 
-        // 04/01/2024 NadeoLiveService initialization and fectching the TOTD. I think...
+        // 04/01/2024 NadeoLiveService initialization
         NadeoLiveServices nls = new NadeoLiveServices(true);
+        //String NadeoUrl = "https://core.trackmania.nadeo.live/storageObjects/";
+        String downloadFolder = "maps/";
+        String filepath = downloadFolder + "cotd.Map.gbx";
+
+        // need to check these parameters
         int length = 1;
         int offset = 0;
-        TrackOfTheDayCollection TOTDCollection = nls.GetTrackOfTheDaysAsync(length, offset, false, default);
-        TOTDCollection.Deconstruct(TOTDMonth, NextRequestTimestamp, RelativeNextRequest);
-        TOTDMonth.Deconstruct(Year, Month, LastDay, TOTDList, Media);
-        String mapUid = TOTDList[0].mapUid;
+        int month = 0;
+        int day = 0;
 
-        // TODO: wth do you do with that now
+        // 05/01/2024 Fetching TOTD
+        Task<TrackOfTheDayCollection> TOTDCollectionTask = nls.GetTrackOfTheDaysAsync(length);
+        TrackOfTheDayCollection TOTDCollection = TOTDCollectionTask.Result;
+        TrackOfTheDayMonth[] TOTDMonth = TOTDCollection.MonthList;
+        TrackOfTheDay[] TOTDList = TOTDMonth[month].Days;
+        String mapUid = TOTDList[day].MapUid;
 
-        // 02/01/2024 before NadeoAPI is set up
-        String filepath = "C:\\Users\\STRpo\\Documents\\coding\\MapParsing\\maps\\cotd.Map.Gbx";
+        // 05/01/2024 TODO: Find how to get storage Id from map UID
+        //the fileUrl is in MapInfo. Got to find how to get from MapUid to MapInfo
+        String mapUrl = "";
 
-        // 02/09/2020 loading one file
+        // 05/01/2024 download the map file
+        using (var client = new WebClient())
+        {
+            client.DownloadFile(mapUrl, filepath);
+        }
+
+        // 05/01/2024 parsing the GBX and checking for cars
         GameBox<CGameCtnChallenge> gbx = LoadGBX(filepath);
         List<String> resultList = getAllCars(gbx);
 
@@ -70,7 +87,7 @@ internal sealed class Scheduler : BackgroundService, IScheduler
             Console.WriteLine("nothing");
         }
 
-        
+        System.IO.File.Delete(filepath);
 
         return Task.CompletedTask;
     }
@@ -78,22 +95,21 @@ internal sealed class Scheduler : BackgroundService, IScheduler
     // 02/09/2020 Load the GBX
     public GameBox<CGameCtnChallenge> LoadGBX(string mapPath)
     {
-        Console.WriteLine("< Start ReaderProgram.LoadGBX");
-        //string mapPath = "C:\\Users\\STRpo\\Documents\\Ultimate Nadeo Maps\\UpdatedFiles\\TrackMania\\1.2.3\\PuzzleD3.Challenge.gbx";
+        Console.WriteLine("< Start Scheduler.LoadGBX");
 
         // 31/08/2020 Reading GBX
         var gbx = GameBox.Parse<CGameCtnChallenge>(mapPath);
 
-        Console.WriteLine("> End ReaderProgram.LoadGBX");
+        Console.WriteLine("> End Scheduler.LoadGBX");
         return gbx;
     }
 
     // 01/01/2024 Main method to check the default car and all car change gates
     public List<String> getAllCars(CGameCtnChallenge map)
     {
-        Console.WriteLine("< Start ReaderProgram.getAllCars");
+        Console.WriteLine("< Start Scheduler.getAllCars");
 
-        Console.WriteLine("[-- Writing block info for {0} --]", map.MapName);
+        Console.WriteLine("[-- Reading cars played in {0} --]", map.MapName);
 
         List<String> carList = new List<String>();
         bool alert = false;
@@ -149,14 +165,14 @@ internal sealed class Scheduler : BackgroundService, IScheduler
         if (alert == true)
         {
             carList = carList.Distinct().ToList();
-            Console.WriteLine("> End ReaderProgram.getAllCars");
+            Console.WriteLine("> End Scheduler.getAllCars");
             return carList;
         }
 
         // 01/01/2024 otherwise return null
         else
         {
-            Console.WriteLine("> End ReaderProgram.getAllCars");
+            Console.WriteLine("> End Scheduler.getAllCars");
             return null;
         }
 
