@@ -40,7 +40,6 @@ internal sealed class Scheduler : BackgroundService, IScheduler
 
         // 04/01/2024 NadeoLiveService initialization
         NadeoLiveServices nls = new NadeoLiveServices(true);
-        //String NadeoUrl = "https://core.trackmania.nadeo.live/storageObjects/";
         String downloadFolder = "maps/";
         String filepath = downloadFolder + "cotd.Map.gbx";
 
@@ -59,7 +58,9 @@ internal sealed class Scheduler : BackgroundService, IScheduler
 
         // 05/01/2024 TODO: Find how to get storage Id from map UID
         //the fileUrl is in MapInfo. Got to find how to get from MapUid to MapInfo
-        String mapUrl = "";
+        MapInfo mapInfo = nls.GetMapInfoAsync(mapUid).Result;
+        
+        String mapUrl = mapInfo.DownloadUrl;
 
         // 05/01/2024 download the map file
         using (var client = new WebClient())
