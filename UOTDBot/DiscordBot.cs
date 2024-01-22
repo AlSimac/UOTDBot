@@ -38,7 +38,7 @@ internal sealed class DiscordBot : IDiscordBot
 
     public async Task StartAsync()
     {
-        var token = _config["Token"] ?? throw new Exception("Token was not provided.");
+        var token = _config["Discord:Token"] ?? throw new Exception("Token was not provided.");
 
         _logger.LogInformation("Starting bot...");
         _logger.LogInformation("Preparing modules...");
@@ -59,7 +59,7 @@ internal sealed class DiscordBot : IDiscordBot
 
         _logger.LogInformation("Loggin in...");
 
-        await _client.LoginAsync(TokenType.Bot, _config["Token"]);
+        await _client.LoginAsync(TokenType.Bot, _config["Discord:Token"]);
 
         _logger.LogInformation("Starting...");
 
@@ -103,7 +103,7 @@ internal sealed class DiscordBot : IDiscordBot
 
         if (_env.IsDevelopment())
         {
-            await _interactionService.RegisterCommandsToGuildAsync(ulong.Parse(_config["TestGuildId"] ?? throw new Exception("TestGuildId was not provided.")), deleteMissing);
+            await _interactionService.RegisterCommandsToGuildAsync(ulong.Parse(_config["Discord:TestGuildId"] ?? throw new Exception("Discord:TestGuildId was not provided.")), deleteMissing);
         }
         else
         {
