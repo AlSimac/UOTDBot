@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using UOTDBot.Extensions;
 
 namespace UOTDBot;
 
@@ -25,8 +26,8 @@ internal sealed class Startup : IHostedService
         await Task.WhenAll(
             _bot.StartAsync(),
             _nls.AuthorizeAsync(
-                _config["DedicatedServer:Login"] ?? throw new Exception("DedicatedServer:Login is required"),
-                _config["DedicatedServer:Password"] ?? throw new Exception("DedicatedServer:Password is required"),
+                _config.GetRequiredValue("DedicatedServer:Login"),
+                _config.GetRequiredValue("DedicatedServer:Password"),
                 AuthorizationMethod.DedicatedServer,
                 cancellationToken)
             );

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace UOTDBot;
+
 public interface IDiscordBot : IAsyncDisposable, IDisposable
 {
     Task StartAsync();
@@ -86,7 +87,7 @@ internal sealed class DiscordBot : IDiscordBot
             LogSeverity.Debug => LogLevel.Trace,
             _ => throw new NotImplementedException()
         },
-            msg.Exception, "{message}", msg.Message);
+            msg.Exception, "{message}", msg.Message ?? msg.Exception?.Message);
 
         return Task.CompletedTask;
     }

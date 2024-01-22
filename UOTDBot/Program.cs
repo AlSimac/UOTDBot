@@ -6,11 +6,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using UOTDBot;
+using GBX.NET.LZO;
+
+GBX.NET.Lzo.SetLzo(typeof(MiniLZO));
 
 var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices((context, services) =>
 {
+    services.AddHttpClient();
+
     // Configure Discord bot
     services.AddSingleton(new DiscordSocketConfig()
     {
