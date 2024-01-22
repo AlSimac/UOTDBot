@@ -38,7 +38,8 @@ builder.ConfigureServices((context, services) =>
     services.AddSingleton<IDiscordBot, DiscordBot>();
 
     // 01/01/2024 Add ManiaAPI.NadeoAPI
-    services.AddSingleton<NadeoLiveServices>();
+    services.AddSingleton<NadeoLiveServices>(
+        provider => new(provider.GetRequiredService<HttpClient>()));
 });
 
 // Use Serilog
