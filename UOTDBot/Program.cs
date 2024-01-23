@@ -16,6 +16,8 @@ builder.ConfigureServices((context, services) =>
 {
     services.AddHttpClient();
 
+    services.AddSingleton(TimeProvider.System);
+
     // Configure Discord bot
     services.AddSingleton(new DiscordSocketConfig()
     {
