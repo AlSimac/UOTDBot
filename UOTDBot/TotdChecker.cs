@@ -3,6 +3,9 @@ using GBX.NET;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using ManiaAPI.NadeoAPI;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
+using UOTDBot.Models;
 
 namespace UOTDBot;
 
@@ -10,12 +13,24 @@ internal sealed class TotdChecker
 {
     private readonly NadeoLiveServices _nls;
     private readonly HttpClient _http;
+    private readonly IDiscordBot _bot;
+    private readonly AppDbContext _db;
+    private readonly IConfiguration _config;
     private readonly ILogger<TotdChecker> _logger;
 
-    public TotdChecker(NadeoLiveServices nls, HttpClient http, ILogger<TotdChecker> logger)
+    public TotdChecker(
+        NadeoLiveServices nls,
+        HttpClient http,
+        IDiscordBot bot,
+        AppDbContext db,
+        IConfiguration config,
+        ILogger<TotdChecker> logger)
     {
         _nls = nls;
         _http = http;
+        _bot = bot;
+        _db = db;
+        _config = config;
         _logger = logger;
     }
 
@@ -55,6 +70,15 @@ internal sealed class TotdChecker
 
         _logger.LogInformation("Found TOTD day {MonthDay} (MapUid: {MapUid})", dayInfo.MonthDay, dayInfo.MapUid);
         _logger.LogDebug("TOTD details: {DayInfo}", day);
+
+        var mapModel = await _db.Maps.FirstOrDefaultAsync(x => x.MapUid == dayInfo.MapUid, cancellationToken);
+
+        if (mapModel is not null)
+        {
+            _logger.LogInformation("Map already exists in database (MapUid: {MapUid}).", dayInfo.MapUid);
+            return;
+        }
+
         _logger.LogInformation("Checking map details (MapUid: {MapUid})...", dayInfo.MapUid);
 
         var mapInfo = await _nls.GetMapInfoAsync(dayInfo.MapUid, cancellationToken);
@@ -70,6 +94,26 @@ internal sealed class TotdChecker
         var map = LoadGBX(mapStream);
 
         CheckMap(map);
+
+        mapModel = new Map
+        {
+            MapId = mapInfo.MapId,
+            MapUid = mapInfo.Uid,
+            Name = mapInfo.Name
+        };
+
+        await _db.Maps.AddAsync(mapModel, cancellationToken);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        foreach (var reportChannelSection in _config.GetSection("Discord:ForcedReportChannels").GetChildren())
+        {
+            if (ulong.TryParse(reportChannelSection.Value, out var val))
+            {
+                _logger.LogInformation("Sending UOTD report to channel {ChannelId}...", val);
+                //await _bot.SendMessageAsync(val, TextFormatter.Deformat(map.MapName));
+            }
+        }
     }
 
     // 02/09/2020 Load the GBX

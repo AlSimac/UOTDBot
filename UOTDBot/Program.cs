@@ -8,6 +8,7 @@ using Serilog;
 using UOTDBot;
 using GBX.NET.LZO;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 GBX.NET.Lzo.SetLzo(typeof(MiniLZO));
 
@@ -21,7 +22,7 @@ builder.ConfigureServices((context, services) =>
 
     services.AddDbContext<AppDbContext>(options =>
     {
-        options.UseSqlite();
+        options.UseSqlite(context.Configuration.GetConnectionString("DefaultConnection"));
     });
 
     // Configure Discord bot
@@ -49,11 +50,16 @@ builder.ConfigureServices((context, services) =>
 
     // Add services
     services.AddSingleton<IDiscordBot, DiscordBot>();
-    services.AddSingleton<TotdChecker>();
+    services.AddScoped<TotdChecker>();
 
     // 01/01/2024 Add ManiaAPI.NadeoAPI
     services.AddSingleton<NadeoLiveServices>(
         provider => new(provider.GetRequiredService<HttpClient>()));
+
+
+    using var scope = services.BuildServiceProvider().CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>().Database;
+    if (db.IsRelational()) db.Migrate();
 });
 
 // Use Serilog

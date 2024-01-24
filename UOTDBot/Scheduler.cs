@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using UOTDBot.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace UOTDBot;
 
@@ -14,14 +15,18 @@ internal sealed class Scheduler : BackgroundService, IScheduler
 {
     private bool _fired = false;
 
-    private readonly TotdChecker _totdChecker;
+    private readonly IServiceProvider _provider;
     private readonly TimeProvider _timeProvider;
     private readonly IConfiguration _config;
     private readonly ILogger<Scheduler> _logger;
 
-    public Scheduler(TotdChecker totdChecker, TimeProvider timeProvider, IConfiguration config, ILogger<Scheduler> logger)
+    public Scheduler(
+        IServiceProvider provider,
+        TimeProvider timeProvider,
+        IConfiguration config,
+        ILogger<Scheduler> logger)
     {
-        _totdChecker = totdChecker;
+        _provider = provider;
         _timeProvider = timeProvider;
         _config = config;
         _logger = logger;
@@ -62,8 +67,19 @@ internal sealed class Scheduler : BackgroundService, IScheduler
             return;
         }
 
-        await _totdChecker.CheckAsync(currentCestDateTime.Day, cancellationToken);
+        await using var scope = _provider.CreateAsyncScope();
 
+        try
+        {
+            await scope.ServiceProvider
+                .GetRequiredService<TotdChecker>()
+                .CheckAsync(currentCestDateTime.Day, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occured while checking for TOTD.");
+        }
+        
         _fired = true;
     }
 }

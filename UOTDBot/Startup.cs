@@ -23,6 +23,8 @@ internal sealed class Startup : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Starting bot and authorizing with NadeoLiveServices...");
+
         await Task.WhenAll(
             _bot.StartAsync(),
             _nls.AuthorizeAsync(

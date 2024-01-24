@@ -11,6 +11,7 @@ public interface IDiscordBot : IAsyncDisposable, IDisposable
 {
     Task StartAsync();
     Task StopAsync();
+    Task SendMessageAsync(ulong channelId, string message);
 }
 
 internal sealed class DiscordBot : IDiscordBot
@@ -69,6 +70,22 @@ internal sealed class DiscordBot : IDiscordBot
         _logger.LogInformation("Started!");
     }
 
+    public async Task StopAsync()
+    {
+        await _client.LogoutAsync();
+        await _client.StopAsync();
+    }
+
+    public async Task SendMessageAsync(ulong channelId, string message)
+    {
+        var channel = await _client.GetChannelAsync(channelId);
+
+        if (channel is ITextChannel textChannel)
+        {
+            await textChannel.SendMessageAsync(message);
+        }
+    }
+
     private async Task ClientReady()
     {
         // Does not need to be called every Ready event
@@ -90,12 +107,6 @@ internal sealed class DiscordBot : IDiscordBot
             msg.Exception, "{message}", msg.Message ?? msg.Exception?.Message);
 
         return Task.CompletedTask;
-    }
-
-    public async Task StopAsync()
-    {
-        await _client.LogoutAsync();
-        await _client.StopAsync();
     }
 
     private async Task RegisterCommandsAsync(bool deleteMissing = true)
