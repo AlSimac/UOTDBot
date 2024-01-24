@@ -62,8 +62,14 @@ internal sealed class Scheduler : BackgroundService, IScheduler
             return;
         }
 
-        await _totdChecker.CheckAsync(currentCestDateTime.Day, cancellationToken);
-
-        _fired = true;
+        try
+        {
+            _fired = await _totdChecker.CheckAsync(currentCestDateTime.Day, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _fired = true;
+            _logger.LogCritical(ex, "Exception while checking TOTD.");
+        }
     }
 }
