@@ -34,7 +34,7 @@ internal sealed class TotdChecker
         _logger = logger;
     }
 
-    public async Task CheckAsync(int day, CancellationToken cancellationToken)
+    public async Task<bool> CheckAsync(int day, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Checking for TOTD...");
 
@@ -43,7 +43,7 @@ internal sealed class TotdChecker
         if (totds.MonthList.Length == 0)
         {
             _logger.LogError("No TOTD found (empty month list).");
-            return;
+            return false;
         }
 
         var month = totds.MonthList[0];
@@ -51,21 +51,21 @@ internal sealed class TotdChecker
         if (month.Days.Length == 0)
         {
             _logger.LogCritical("No TOTD found (empty day list).");
-            return;
+            return false;
         }
 
         if (day > month.Days.Length)
         {
             _logger.LogCritical("No TOTD found (day out of range).");
-            return;
+            return false;
         }
 
         var dayInfo = month.Days[day - 1];
 
         if (string.IsNullOrEmpty(dayInfo.MapUid))
         {
-            _logger.LogCritical("No TOTD found (empty map UID).");
-            return;
+            _logger.LogError("No TOTD found (empty map UID). Is Scheduler:StartTime too early?");
+            return false;
         }
 
         _logger.LogInformation("Found TOTD day {MonthDay} (MapUid: {MapUid})", dayInfo.MonthDay, dayInfo.MapUid);
@@ -76,7 +76,7 @@ internal sealed class TotdChecker
         if (mapModel is not null)
         {
             _logger.LogInformation("Map already exists in database (MapUid: {MapUid}).", dayInfo.MapUid);
-            return;
+            return false;
         }
 
         _logger.LogInformation("Checking map details (MapUid: {MapUid})...", dayInfo.MapUid);
@@ -114,6 +114,8 @@ internal sealed class TotdChecker
                 //await _bot.SendMessageAsync(val, TextFormatter.Deformat(map.MapName));
             }
         }
+
+        return true;
     }
 
     // 02/09/2020 Load the GBX

@@ -71,15 +71,14 @@ internal sealed class Scheduler : BackgroundService, IScheduler
 
         try
         {
-            await scope.ServiceProvider
+            _fired = await scope.ServiceProvider
                 .GetRequiredService<TotdChecker>()
                 .CheckAsync(currentCestDateTime.Day, cancellationToken);
         }
         catch (Exception ex)
         {
+            _fired = true;
             _logger.LogError(ex, "An error occured while checking for TOTD.");
         }
-        
-        _fired = true;
     }
 }
