@@ -43,6 +43,7 @@ builder.ConfigureServices((context, services) =>
 
     // Add services
     services.AddSingleton<IDiscordBot, DiscordBot>();
+    services.AddSingleton<TotdChecker>();
 
     // 01/01/2024 Add ManiaAPI.NadeoAPI
     services.AddSingleton<NadeoLiveServices>(
