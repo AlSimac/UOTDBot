@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using UOTDBot;
 using GBX.NET.LZO;
+using Microsoft.EntityFrameworkCore;
 
 GBX.NET.Lzo.SetLzo(typeof(MiniLZO));
 
@@ -17,6 +18,11 @@ builder.ConfigureServices((context, services) =>
     services.AddHttpClient();
 
     services.AddSingleton(TimeProvider.System);
+
+    services.AddDbContext<AppDbContext>(options =>
+    {
+        options.UseSqlite();
+    });
 
     // Configure Discord bot
     services.AddSingleton(new DiscordSocketConfig()
