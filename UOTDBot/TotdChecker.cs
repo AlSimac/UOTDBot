@@ -76,7 +76,7 @@ internal sealed class TotdChecker
         if (mapModel is not null)
         {
             _logger.LogInformation("Map already exists in database (MapUid: {MapUid}).", dayInfo.MapUid);
-            return false;
+            return true;
         }
 
         _logger.LogInformation("Checking map details (MapUid: {MapUid})...", dayInfo.MapUid);
