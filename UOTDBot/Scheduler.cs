@@ -77,7 +77,7 @@ internal sealed class Scheduler : BackgroundService, IScheduler
         }
         catch (Exception ex)
         {
-            _fired = true;
+            _fired = false; // should repeat on exceptions. Discord and report related exceptions are handled in TotdChecker.
             _logger.LogError(ex, "An error occured while checking for TOTD.");
         }
     }
