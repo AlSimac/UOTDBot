@@ -48,8 +48,7 @@ internal sealed class Scheduler : BackgroundService, IScheduler
     {
         // ... something every second ...
 
-        var currentCestDateTime = _timeProvider.GetUtcNow()
-            .ToOffset(TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time").BaseUtcOffset);
+        var currentCestDateTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(_timeProvider.GetUtcNow(), "Central European Standard Time");
 
         var timeOfDay = currentCestDateTime.TimeOfDay;
         
