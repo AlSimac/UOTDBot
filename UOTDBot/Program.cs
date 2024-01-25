@@ -55,11 +55,6 @@ builder.ConfigureServices((context, services) =>
     // 01/01/2024 Add ManiaAPI.NadeoAPI
     services.AddSingleton<NadeoLiveServices>(
         provider => new(provider.GetRequiredService<HttpClient>()));
-
-
-    using var scope = services.BuildServiceProvider().CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>().Database;
-    if (db.IsRelational()) db.Migrate();
 });
 
 // Use Serilog
