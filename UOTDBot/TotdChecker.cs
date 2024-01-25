@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using ManiaAPI.NadeoAPI;
-using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using UOTDBot.Models;
 
@@ -10,14 +9,14 @@ internal sealed class TotdChecker
 {
     private readonly NadeoLiveServices _nls;
     private readonly HttpClient _http;
-    private readonly UnitedCarChecker _carChecker;
+    private readonly CarChecker _carChecker;
     private readonly AppDbContext _db;
     private readonly ILogger<TotdChecker> _logger;
 
     public TotdChecker(
         NadeoLiveServices nls,
         HttpClient http,
-        UnitedCarChecker carChecker,
+        CarChecker carChecker,
         AppDbContext db,
         ILogger<TotdChecker> logger)
     {

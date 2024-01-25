@@ -5,11 +5,11 @@ using Microsoft.Extensions.Logging;
 
 namespace UOTDBot;
 
-internal sealed class UnitedCarChecker
+internal sealed class CarChecker
 {
-    private readonly ILogger<UnitedCarChecker> _logger;
+    private readonly ILogger<CarChecker> _logger;
 
-    public UnitedCarChecker(ILogger<UnitedCarChecker> logger)
+    public CarChecker(ILogger<CarChecker> logger)
     {
         _logger = logger;
     }
