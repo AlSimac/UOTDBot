@@ -51,6 +51,8 @@ builder.ConfigureServices((context, services) =>
     // Add services
     services.AddSingleton<IDiscordBot, DiscordBot>();
     services.AddScoped<TotdChecker>();
+    services.AddScoped<UnitedCarChecker>();
+    services.AddScoped<DiscordReporter>();
 
     // 01/01/2024 Add ManiaAPI.NadeoAPI
     services.AddSingleton<NadeoLiveServices>(
