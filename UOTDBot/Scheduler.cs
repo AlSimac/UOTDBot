@@ -85,6 +85,7 @@ internal sealed class Scheduler : BackgroundService, IScheduler
         await using var scope = _provider.CreateAsyncScope();
 
         var map = default(Map);
+        var shouldReport = _fired;
 
         try
         {
@@ -100,13 +101,11 @@ internal sealed class Scheduler : BackgroundService, IScheduler
             _logger.LogError(ex, "An error occured while checking for TOTD.");
         }
 
-        if (map is null)
+        if (shouldReport && map is not null)
         {
-            return;
+            await scope.ServiceProvider
+                .GetRequiredService<DiscordReporter>()
+                .ReportAsync(map, cancellationToken);
         }
-
-        await scope.ServiceProvider
-            .GetRequiredService<DiscordReporter>()
-            .ReportAsync(map, cancellationToken);
     }
 }
