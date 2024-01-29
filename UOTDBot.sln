@@ -7,10 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOTDBot", "UOTDBot\UOTDBot.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Položky řešení", "Položky řešení", "{9E17F9C3-8D26-485B-AED8-96383174F8D8}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UOTDBot.Tests", "UOTDBot.Tests\UOTDBot.Tests.csproj", "{452903B5-B87C-4E9E-AF14-344ADEA7AF92}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOTDBot.Tests", "UOTDBot.Tests\UOTDBot.Tests.csproj", "{452903B5-B87C-4E9E-AF14-344ADEA7AF92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

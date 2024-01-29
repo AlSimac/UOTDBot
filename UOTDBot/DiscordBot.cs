@@ -11,7 +11,7 @@ public interface IDiscordBot : IAsyncDisposable, IDisposable
 {
     Task StartAsync();
     Task StopAsync();
-    Task SendMessageAsync(ulong channelId, string message);
+    Task SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null);
 }
 
 internal sealed class DiscordBot : IDiscordBot
@@ -76,13 +76,13 @@ internal sealed class DiscordBot : IDiscordBot
         await _client.StopAsync();
     }
 
-    public async Task SendMessageAsync(ulong channelId, string message)
+    public async Task SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null)
     {
         var channel = await _client.GetChannelAsync(channelId);
 
         if (channel is ITextChannel textChannel)
         {
-            await textChannel.SendMessageAsync(message);
+            await textChannel.SendMessageAsync(message, embed: embed);
         }
     }
 

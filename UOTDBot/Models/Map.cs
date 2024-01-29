@@ -6,4 +6,6 @@ internal sealed class Map
     public required Guid MapId { get; set; }
     public required string MapUid { get; set; }
     public required string Name { get; set; }
+    public required string ThumbnailUrl { get; set; }
+    public required int AuthorTime { get; set; }
 }

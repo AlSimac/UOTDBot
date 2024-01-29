@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Discord;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TmEssentials;
 using UOTDBot.Models;
@@ -28,7 +29,24 @@ internal sealed class DiscordReporter
 
                 try
                 {
-                    await _bot.SendMessageAsync(val, TextFormatter.Deformat(map.Name));
+                    var length = map.AuthorTime + 1000;
+                    var minutes = length / 60000;
+                    var seconds = length % 60000 / 1000;
+
+                    var lengthString = $"{seconds} sec";
+                    if (minutes > 0) lengthString = $"{minutes} min, {lengthString}";
+
+                    var embed = new EmbedBuilder()
+                        .WithTitle("New United TOTD!")
+                        .WithFields(
+                            new EmbedFieldBuilder { Name = "Map", Value = $"[{TextFormatter.Deformat(map.Name)}](https://trackmania.io/#/leaderboard/{map.MapUid})", IsInline = true },
+                            new EmbedFieldBuilder { Name = "Length", Value = $"~{lengthString}", IsInline = true },
+                            new EmbedFieldBuilder { Name = "Features", Value = $"SnowCar\nRallyCar\nDesertCar", IsInline = true })
+                        .WithThumbnailUrl(map.ThumbnailUrl)
+                        .WithCurrentTimestamp()
+                        .Build();
+
+                    await _bot.SendMessageAsync(val, embed: embed);
                 }
                 catch (Exception ex)
                 {

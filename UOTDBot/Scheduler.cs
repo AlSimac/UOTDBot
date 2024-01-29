@@ -9,7 +9,7 @@ namespace UOTDBot;
 
 public interface IScheduler
 {
-    Task RunAsync(CancellationToken cancellationToken);
+    Task TickAsync(CancellationToken cancellationToken);
 }
 
 internal sealed class Scheduler : BackgroundService, IScheduler
@@ -51,11 +51,11 @@ internal sealed class Scheduler : BackgroundService, IScheduler
 
         while (await periodicTimer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
         {
-            await RunAsync(stoppingToken);
+            await TickAsync(stoppingToken);
         }
     }
 
-    public async Task RunAsync(CancellationToken cancellationToken)
+    public async Task TickAsync(CancellationToken cancellationToken)
     {
         // ... something every second ...
 
@@ -85,23 +85,21 @@ internal sealed class Scheduler : BackgroundService, IScheduler
         await using var scope = _provider.CreateAsyncScope();
 
         var map = default(Map);
-        var shouldReport = _fired;
 
         try
         {
             map = await scope.ServiceProvider
                 .GetRequiredService<TotdChecker>()
                 .CheckAsync(day, cancellationToken);
-
-            _fired = map is not null;
         }
         catch (Exception ex)
         {
-            _fired = false; // should repeat on exceptions.
             _logger.LogError(ex, "An error occured while checking for TOTD.");
         }
 
-        if (shouldReport && map is not null)
+        _fired = true;
+
+        if (map is not null)
         {
             await scope.ServiceProvider
                 .GetRequiredService<DiscordReporter>()

@@ -69,7 +69,7 @@ internal sealed class TotdChecker
         if (mapModel is not null)
         {
             _logger.LogInformation("Map already exists in database (MapUid: {MapUid}). Nothing to report.", dayInfo.MapUid);
-            return mapModel;
+            return null;
         }
 
         _logger.LogInformation("Checking map details (MapUid: {MapUid})...", dayInfo.MapUid);
@@ -90,7 +90,9 @@ internal sealed class TotdChecker
         {
             MapId = mapInfo.MapId,
             MapUid = mapInfo.Uid,
-            Name = mapInfo.Name
+            Name = mapInfo.Name,
+            ThumbnailUrl = mapInfo.ThumbnailUrl,
+            AuthorTime = mapInfo.AuthorTime.TotalMilliseconds
         };
 
         await _db.Maps.AddAsync(mapModel, cancellationToken);
