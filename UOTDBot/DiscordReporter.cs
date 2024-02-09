@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ByteSizeLib;
+using Discord;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TmEssentials;
@@ -50,7 +51,10 @@ internal sealed class DiscordReporter
                 .WithFields(
                     new EmbedFieldBuilder { Name = "Map", Value = $"[{TextFormatter.Deformat(map.Name)}](https://trackmania.io/#/leaderboard/{map.MapUid})", IsInline = true },
                     new EmbedFieldBuilder { Name = "Length", Value = $"~{lengthString}", IsInline = true },
-                    new EmbedFieldBuilder { Name = "Features", Value = $"SnowCar\nRallyCar\nDesertCar", IsInline = true })
+                    new EmbedFieldBuilder { Name = "Features", Value = "SnowCar", IsInline = true },
+                    new EmbedFieldBuilder { Name = "Size", Value = ByteSize.FromBytes(map.FileSize), IsInline = true },
+                    new EmbedFieldBuilder { Name = "Uploaded", Value = TimestampTag.FromDateTimeOffset(map.UploadedAt, TimestampTagStyles.Relative), IsInline = true },
+                    new EmbedFieldBuilder { Name = "Updated", Value = TimestampTag.FromDateTimeOffset(map.UpdatedAt, TimestampTagStyles.Relative), IsInline = true })
                 .WithThumbnailUrl(map.ThumbnailUrl)
                 .WithCurrentTimestamp()
                 .Build();

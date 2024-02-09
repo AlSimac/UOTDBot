@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +12,7 @@ public interface IDiscordBot : IAsyncDisposable, IDisposable
 {
     Task StartAsync();
     Task StopAsync();
-    Task SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null);
+    Task<bool> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null);
 }
 
 internal sealed class DiscordBot : IDiscordBot
@@ -45,7 +46,8 @@ internal sealed class DiscordBot : IDiscordBot
         _logger.LogInformation("Starting bot...");
         _logger.LogInformation("Preparing modules...");
 
-        await _interactionService.AddModulesAsync(typeof(Startup).Assembly, _provider);
+        using var scope = _provider.CreateScope();
+        await _interactionService.AddModulesAsync(typeof(Startup).Assembly, scope.ServiceProvider);
 
         _logger.LogInformation("Subscribing to events...");
 
@@ -76,14 +78,17 @@ internal sealed class DiscordBot : IDiscordBot
         await _client.StopAsync();
     }
 
-    public async Task SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null)
+    public async Task<bool> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null)
     {
         var channel = await _client.GetChannelAsync(channelId);
 
-        if (channel is ITextChannel textChannel)
+        if (channel is not IMessageChannel msgChannel)
         {
-            await textChannel.SendMessageAsync(message, embed: embed);
+            return false;
         }
+
+        await msgChannel.SendMessageAsync(message, embed: embed);
+        return true;
     }
 
     private async Task ClientReady()

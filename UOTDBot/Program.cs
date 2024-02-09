@@ -10,13 +10,19 @@ using GBX.NET.LZO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
+using Polly;
+using Polly.Contrib.WaitAndRetry;
+
 GBX.NET.Lzo.SetLzo(typeof(MiniLZO));
 
 var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices((context, services) =>
 {
-    services.AddHttpClient();
+    services.AddHttpClient<NadeoLiveServices>()
+        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+        ));
 
     services.AddSingleton(TimeProvider.System);
 

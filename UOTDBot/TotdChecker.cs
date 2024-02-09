@@ -75,7 +75,7 @@ internal sealed class TotdChecker
         _logger.LogInformation("Checking map details (MapUid: {MapUid})...", dayInfo.MapUid);
 
         var mapInfo = await _nls.GetMapInfoAsync(dayInfo.MapUid, cancellationToken);
-
+        
         _logger.LogDebug("Map details: {MapInfo}", mapInfo);
 
         using var mapResponse = await _http.GetAsync(mapInfo.DownloadUrl, cancellationToken);
@@ -93,7 +93,10 @@ internal sealed class TotdChecker
             Name = mapInfo.Name,
             ThumbnailUrl = mapInfo.ThumbnailUrl,
             DownloadUrl = mapInfo.DownloadUrl,
-            AuthorTime = mapInfo.AuthorTime
+            AuthorTime = mapInfo.AuthorTime,
+            FileSize = (int)mapResponse.Content.Headers.ContentLength.GetValueOrDefault(),
+            UploadedAt = mapInfo.UploadTimestamp,
+            UpdatedAt = mapInfo.UpdateTimestamp,
         };
 
         await _db.Maps.AddAsync(mapModel, cancellationToken);
