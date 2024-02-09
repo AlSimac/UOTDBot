@@ -50,8 +50,6 @@ internal sealed class Startup : IHostedService
                 AuthorizationMethod.DedicatedServer,
                 cancellationToken)
             );
-
-        // ... further startup logic here ...
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)

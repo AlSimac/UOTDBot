@@ -92,7 +92,8 @@ internal sealed class TotdChecker
             MapUid = mapInfo.Uid,
             Name = mapInfo.Name,
             ThumbnailUrl = mapInfo.ThumbnailUrl,
-            AuthorTime = mapInfo.AuthorTime.TotalMilliseconds
+            DownloadUrl = mapInfo.DownloadUrl,
+            AuthorTime = mapInfo.AuthorTime
         };
 
         await _db.Maps.AddAsync(mapModel, cancellationToken);

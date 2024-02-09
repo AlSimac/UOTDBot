@@ -26,6 +26,10 @@ namespace UOTDBot.Migrations
                     b.Property<int>("AuthorTime")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("DownloadUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("MapId")
                         .HasColumnType("TEXT");
 

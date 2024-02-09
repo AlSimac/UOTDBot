@@ -77,6 +77,8 @@ internal sealed class Scheduler : BackgroundService, IScheduler
             return;
         }
 
+        _fired = true;
+
         await CheckAndReportTotdAsync(currentCestDateTime.Day, cancellationToken);
     }
 
@@ -97,13 +99,11 @@ internal sealed class Scheduler : BackgroundService, IScheduler
             _logger.LogError(ex, "An error occured while checking for TOTD.");
         }
 
-        _fired = true;
-
         if (map is not null)
         {
             await scope.ServiceProvider
                 .GetRequiredService<DiscordReporter>()
-                .ReportAsync(map, cancellationToken);
+                .ReportInChannelsAsync(map, cancellationToken);
         }
     }
 }

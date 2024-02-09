@@ -11,8 +11,8 @@ using UOTDBot;
 namespace UOTDBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240129200928_AddAuthorTime")]
-    partial class AddAuthorTime
+    [Migration("20240209001755_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,6 +28,10 @@ namespace UOTDBot.Migrations
 
                     b.Property<int>("AuthorTime")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("DownloadUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("MapId")
                         .HasColumnType("TEXT");

@@ -1,4 +1,6 @@
-﻿namespace UOTDBot.Models;
+﻿using TmEssentials;
+
+namespace UOTDBot.Models;
 
 internal sealed class Map
 {
@@ -7,5 +9,6 @@ internal sealed class Map
     public required string MapUid { get; set; }
     public required string Name { get; set; }
     public required string ThumbnailUrl { get; set; }
-    public required int AuthorTime { get; set; }
+    public required string DownloadUrl { get; set; }
+    public required TimeInt32 AuthorTime { get; set; }
 }
