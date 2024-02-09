@@ -2,7 +2,8 @@
 using Discord.Interactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Threading.Channels;
+using System.Text;
+using TmEssentials;
 using UOTDBot.Models;
 
 namespace UOTDBot.Commands;
@@ -185,7 +186,55 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
     [SlashCommand("list", "Gets the list of UOTD reports, including the map information.")]
     public async Task List()
     {
+        if (Context.User is not IGuildUser guildUser)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("This command only works on a server.").Build(),
+                    ephemeral: true);
+            return;
+        }
 
+        var reportChannel = await _db.ReportChannels
+            .FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id && c.IsEnabled);
+
+        if (reportChannel is null)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("This server is not subscribed to UOTD reports.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        var reports = await _db.ReportMessages
+            .Include(r => r.Map)
+            .Include(r => r.Channel)
+            .Where(r => r.Channel != null && r.Channel.ChannelId == reportChannel.ChannelId)
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(10)
+            .ToListAsync();
+
+        if (reports.Count == 0)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("No UOTD reports found.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"Last {reports.Count} UOTD reports in {MentionUtils.MentionChannel(reportChannel.ChannelId)}:");
+        sb.AppendLine();
+
+        foreach (var report in reports)
+        {
+            var jumpLink = $"https://discord.com/channels/{report.Channel!.GuildId}/{report.OriginalChannelId}/{report.MessageId}";
+            sb.AppendLine($"{jumpLink} - {TimestampTag.FromDateTimeOffset(report.CreatedAt, TimestampTagStyles.ShortDate)} - {TextFormatter.Deformat(report.Map.Name)}");
+        }
+
+        await RespondAsync(embed: new EmbedBuilder()
+            .WithTitle("UOTD reports")
+            .WithDescription(sb.ToString()).Build(),
+                ephemeral: true);
     }
 
     [SlashCommand("autothread", "Enables or disables creation of threads on UOTD reports.")]

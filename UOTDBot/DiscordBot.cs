@@ -49,6 +49,8 @@ internal sealed class DiscordBot : IDiscordBot
         _logger.LogInformation("Starting bot...");
         _logger.LogInformation("Preparing modules...");
 
+        _interactionService.Log += ClientLog;
+
         using var scope = _provider.CreateScope();
         await _interactionService.AddModulesAsync(typeof(Startup).Assembly, scope.ServiceProvider);
 

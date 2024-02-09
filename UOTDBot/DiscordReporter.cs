@@ -37,7 +37,7 @@ internal sealed class DiscordReporter
                 continue;
             }
 
-            var msg = await ReportInChannelAsync(map, channelId);
+            var msg = await ReportInChannelAsync(map, channelId, autoThread: false);
 
             if (msg is not null)
             {
@@ -53,25 +53,11 @@ internal sealed class DiscordReporter
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var message = await ReportInChannelAsync(map, reportChannel.ChannelId);
+            var message = await ReportInChannelAsync(map, reportChannel);
 
-            if (message is null)
+            if (message is not null)
             {
-                continue;
-            }
-
-            reportCount++;
-
-            if (reportChannel.AutoThread)
-            {
-                try
-                {
-                    await _bot.CreateThreadAsync(reportChannel.ChannelId, message, "lol");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to create thread for report in channel {ChannelId}.", reportChannel.ChannelId);
-                }
+                reportCount++;
             }
         }
 
@@ -85,46 +71,120 @@ internal sealed class DiscordReporter
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var user = await _bot.GetUserAsync(reportUser.UserId);
+            var message = await ReportInDMAsync(map, reportUser);
 
-            if (user is null)
+            if (message is not null)
             {
-                _logger.LogWarning("User not found for report DM (UserId: {UserId}).", reportUser.UserId);
-                continue;
-            }
-
-            try
-            {
-                var embed = CreateEmbed(map);
-
-                await user.SendMessageAsync(embed: embed);
                 dmCount++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send UOTD report to user {UserId}.", reportUser.UserId);
             }
         }
 
         _logger.LogInformation("Reported UOTD to {ChannelCount} channels and {DmCount} DMs.", reportCount, dmCount);
     }
 
-    private async Task<IUserMessage?> ReportInChannelAsync(Map map, ulong channelId)
+    private async Task<ReportMessage?> ReportInChannelAsync(Map map, ReportChannel channel)
+    {
+        var message = await ReportInChannelAsync(map, channel.ChannelId, channel.AutoThread);
+
+        if (message is null)
+        {
+            return null;
+        }
+
+        var createdAt = DateTimeOffset.UtcNow;
+
+        var reportMessage = new ReportMessage
+        {
+            MessageId = message.Id,
+            OriginalChannelId = channel.ChannelId,
+            Map = map,
+            Channel = channel,
+            CreatedAt = createdAt,
+            UpdatedAt = createdAt
+        };
+
+        await _db.ReportMessages.AddAsync(reportMessage);
+        await _db.SaveChangesAsync();
+
+        return reportMessage;
+    }
+
+    private async Task<IUserMessage?> ReportInChannelAsync(Map map, ulong channelId, bool autoThread)
     {
         _logger.LogInformation("Sending UOTD report to channel {ChannelId}...", channelId);
+
+        IUserMessage? message;
 
         try
         {
             var embed = CreateEmbed(map);
 
-            return await _bot.SendMessageAsync(channelId, embed: embed);
+            message = await _bot.SendMessageAsync(channelId, embed: embed);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send UOTD report to channel {ChannelId}.", channelId);
+            return null;
         }
 
-        return null;
+        if (autoThread && message is not null)
+        {
+            try
+            {
+                await _bot.CreateThreadAsync(channelId, message, "lol");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create thread for report in channel {ChannelId}.", channelId);
+            }
+        }
+
+        return message;
+    }
+
+    private async Task<ReportMessage?> ReportInDMAsync(Map map, ReportUser reportUser)
+    {
+        var userId = reportUser.UserId;
+
+        _logger.LogInformation("Sending UOTD report to DM {UserId}...", userId);
+
+        var user = await _bot.GetUserAsync(userId);
+        
+        if (user is null)
+        {
+            _logger.LogWarning("User not found for report DM (UserId: {UserId}).", userId);
+            return null;
+        }
+
+        IUserMessage? message;
+
+        try
+        {
+            var embed = CreateEmbed(map);
+
+            message = await user.SendMessageAsync(embed: embed);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send UOTD report to user {UserId}.", userId);
+            return null;
+        }
+
+        var createdAt = DateTimeOffset.UtcNow;
+
+        var reportMessage = new ReportMessage
+        {
+            MessageId = message.Id,
+            Map = map,
+            DM = reportUser,
+            CreatedAt = createdAt,
+            UpdatedAt = createdAt
+        };
+
+        await _db.ReportMessages.AddAsync(reportMessage);
+        await _db.SaveChangesAsync();
+
+        return reportMessage;
     }
 
     private static Embed CreateEmbed(Map map)

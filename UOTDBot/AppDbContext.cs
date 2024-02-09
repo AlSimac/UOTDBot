@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TmEssentials;
 using UOTDBot.Models;
 
@@ -9,6 +10,7 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Map> Maps { get; set; }
     public DbSet<ReportChannel> ReportChannels { get; set; }
     public DbSet<ReportUser> ReportUsers { get; set; }
+    public DbSet<ReportMessage> ReportMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -18,5 +20,10 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
             .HasConversion(
                 timeInt32 => timeInt32.TotalMilliseconds,
                 totalMs => new TimeInt32(totalMs));
+
+        modelBuilder
+            .Entity<ReportMessage>()
+            .Property(x => x.CreatedAt)
+            .HasConversion(new DateTimeOffsetToBinaryConverter());
     }
 }
