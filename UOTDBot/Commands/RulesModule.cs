@@ -5,7 +5,7 @@ namespace UOTDBot.Commands;
 
 public sealed class RulesModule : InteractionModuleBase<SocketInteractionContext>
 {
-    [SlashCommand("rules", "What are the requirements of TOTD to be reported.")]
+    [SlashCommand("rules", "What are the requirements of TOTD to be reported by UOTD?")]
     public async Task Rules()
     {
         await RespondAsync(embed: new EmbedBuilder()

@@ -13,8 +13,8 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         _db = db;
     }
 
-    [SlashCommand("subscribe", "Subscribe channel to UOTD reports.")]
-    public async Task Subscribe(IChannel? other = default)
+    [SlashCommand("subscribe", "Subscribe to UOTD reports in this or other text channel.")]
+    public async Task Subscribe([ChannelTypes(ChannelType.Text)] IChannel? other = default)
     {
         var channel = other ?? Context.Channel;
 
@@ -30,7 +30,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         //_db.ReportChannels.Add(new ReportChannel { ChannelId = channel.Id });
     }
 
-    [SlashCommand("unsubscribe", "Unsubscribe channel from UOTD reports.")]
+    [SlashCommand("unsubscribe", "Unsubscribe to UOTD reports on this server.")]
     public async Task Unsubscribe()
     {
         await RespondAsync(embed: new EmbedBuilder()
@@ -44,9 +44,15 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         await Context.User.SendMessageAsync("I spam DMs now");
     }
 
-    [SlashCommand("list", "Gets the list of UOTD reports, including their map name.")]
-    public async Task List(IChannel? other = default)
+    [SlashCommand("list", "Gets the list of UOTD reports, including the map information.")]
+    public async Task List()
     {
-        var channel = other ?? Context.Channel;
+
+    }
+
+    [SlashCommand("autothread", "Enables or disables creation of threads on UOTD reports.")]
+    public async Task Autothread()
+    {
+
     }
 }

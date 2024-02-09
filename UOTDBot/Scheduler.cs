@@ -42,7 +42,6 @@ internal sealed class Scheduler : BackgroundService, IScheduler
         if (_env.IsDevelopment() && DateTimeOffset.Now.Day - 1 > 0 && DateTimeOffset.Now.TimeOfDay < TimeSpan.Parse(_config.GetRequiredValue("Scheduler:StartTime")))
         {
             await CheckAndReportTotdAsync(DateTimeOffset.Now.Day - 1, stoppingToken);
-            return;
         }
 
         _logger.LogInformation("Starting scheduler...");
