@@ -14,7 +14,7 @@ public sealed class CarModule : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("emote", "Get or set the car emote for reports.")]
-    public async Task Emote([Choice("SnowCar", "CarSnow")] string car, string? emote = null)
+    public async Task Emote([Choice("SnowCar", "CarSnow")] string car, string? emote = null, bool reset = false)
     {
         if (Discord.Emote.TryParse(emote, out var emoteModel))
         {

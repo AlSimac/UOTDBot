@@ -7,6 +7,8 @@ namespace UOTDBot;
 public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Map> Maps { get; set; }
+    public DbSet<ReportChannel> ReportChannels { get; set; }
+    public DbSet<ReportUser> ReportUsers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

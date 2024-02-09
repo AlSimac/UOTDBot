@@ -12,7 +12,10 @@ public interface IDiscordBot : IAsyncDisposable, IDisposable
 {
     Task StartAsync();
     Task StopAsync();
-    Task<bool> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null);
+
+    Task<IUserMessage?> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null);
+    Task<IThreadChannel?> CreateThreadAsync(ulong channelId, IMessage message, string name);
+    Task<IUser?> GetUserAsync(ulong userId);
 }
 
 internal sealed class DiscordBot : IDiscordBot
@@ -78,17 +81,33 @@ internal sealed class DiscordBot : IDiscordBot
         await _client.StopAsync();
     }
 
-    public async Task<bool> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null)
+    public async Task<IUserMessage?> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null)
     {
         var channel = await _client.GetChannelAsync(channelId);
 
         if (channel is not IMessageChannel msgChannel)
         {
-            return false;
+            return null;
         }
 
-        await msgChannel.SendMessageAsync(message, embed: embed);
-        return true;
+        return await msgChannel.SendMessageAsync(message, embed: embed);
+    }
+
+    public async Task<IThreadChannel?> CreateThreadAsync(ulong channelId, IMessage message, string name)
+    {
+        var channel = await _client.GetChannelAsync(channelId);
+
+        if (channel is not ITextChannel textChannel)
+        {
+            return null;
+        }
+
+        return await textChannel.CreateThreadAsync(name, message: message);
+    }
+
+    public async Task<IUser?> GetUserAsync(ulong userId)
+    {
+        return await _client.GetUserAsync(userId);
     }
 
     private async Task ClientReady()
