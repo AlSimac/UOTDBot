@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 
-namespace UOTDBot.Commands;
+namespace UOTDBot.Modules;
 
 public sealed class RulesModule : InteractionModuleBase<SocketInteractionContext>
 {

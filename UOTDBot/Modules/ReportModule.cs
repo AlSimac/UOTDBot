@@ -6,7 +6,7 @@ using System.Text;
 using TmEssentials;
 using UOTDBot.Models;
 
-namespace UOTDBot.Commands;
+namespace UOTDBot.Modules;
 
 [Group("report", "UOTD report management.")]
 public sealed class ReportModule : InteractionModuleBase<SocketInteractionContext>

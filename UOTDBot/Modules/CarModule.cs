@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 
-namespace UOTDBot.Commands;
+namespace UOTDBot.Modules;
 
 [Group("car", "Features related to cars.")]
 public sealed class CarModule : InteractionModuleBase<SocketInteractionContext>
