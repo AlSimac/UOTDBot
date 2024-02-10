@@ -24,6 +24,11 @@ builder.ConfigureServices((context, services) =>
             Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
         ));
 
+    services.AddHttpClient<NadeoClubServices>()
+        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+        ));
+
     services.AddSingleton(TimeProvider.System);
 
     services.AddDbContext<AppDbContext>(options =>
@@ -64,6 +69,9 @@ builder.ConfigureServices((context, services) =>
     // 01/01/2024 Add ManiaAPI.NadeoAPI
     services.AddSingleton<NadeoLiveServices>(
         provider => new(provider.GetRequiredService<HttpClient>()));
+    services.AddSingleton<NadeoClubServices>(
+        provider => new(provider.GetRequiredService<HttpClient>()));
+
 });
 
 // Use Serilog

@@ -8,6 +8,7 @@ namespace UOTDBot;
 internal sealed class TotdChecker
 {
     private readonly NadeoLiveServices _nls;
+    private readonly NadeoClubServices _ncs;
     private readonly HttpClient _http;
     private readonly CarChecker _carChecker;
     private readonly AppDbContext _db;
@@ -15,12 +16,14 @@ internal sealed class TotdChecker
 
     public TotdChecker(
         NadeoLiveServices nls,
+        NadeoClubServices ncs,
         HttpClient http,
         CarChecker carChecker,
         AppDbContext db,
         ILogger<TotdChecker> logger)
     {
         _nls = nls;
+        _ncs = ncs;
         _http = http;
         _carChecker = carChecker;
         _db = db;
@@ -102,6 +105,9 @@ internal sealed class TotdChecker
         await _db.Maps.AddAsync(mapModel, cancellationToken);
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken);
+        _logger.LogInformation("NadeoClubServices: {Cotd}", cotd);
 
         return mapModel;
     }

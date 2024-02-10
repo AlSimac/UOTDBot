@@ -13,6 +13,7 @@ internal sealed class Startup : IHostedService
     private readonly IServiceProvider _provider;
     private readonly IDiscordBot _bot;
     private readonly NadeoLiveServices _nls;
+    private readonly NadeoClubServices _ncs;
     private readonly IConfiguration _config;
     private readonly ILogger<Startup> _logger;
 
@@ -20,12 +21,14 @@ internal sealed class Startup : IHostedService
         IServiceProvider provider,
         IDiscordBot bot,
         NadeoLiveServices nls,
+        NadeoClubServices ncs,
         IConfiguration config,
         ILogger<Startup> logger)
     {
         _provider = provider;
         _bot = bot;
         _nls = nls;
+        _ncs = ncs;
         _config = config;
         _logger = logger;
     }
@@ -40,13 +43,21 @@ internal sealed class Startup : IHostedService
             if (db.IsRelational()) db.Migrate();
         }
 
-        _logger.LogInformation("Starting bot and authorizing with NadeoLiveServices...");
+        _logger.LogInformation("Starting bot and authorizing with NadeoLiveServices + NadeoClubServices...");
+
+        var dedicatedServerLogin = _config.GetRequiredValue("DedicatedServer:Login");
+        var dedicatedServerPassword = _config.GetRequiredValue("DedicatedServer:Password");
 
         await Task.WhenAll(
             _bot.StartAsync(),
             _nls.AuthorizeAsync(
-                _config.GetRequiredValue("DedicatedServer:Login"),
-                _config.GetRequiredValue("DedicatedServer:Password"),
+                dedicatedServerLogin,
+                dedicatedServerPassword,
+                AuthorizationMethod.DedicatedServer,
+                cancellationToken),
+            _ncs.AuthorizeAsync(
+                dedicatedServerLogin,
+                dedicatedServerPassword,
                 AuthorizationMethod.DedicatedServer,
                 cancellationToken)
             );

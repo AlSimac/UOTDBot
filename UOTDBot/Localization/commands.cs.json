@@ -1,13 +1,13 @@
 {
   "report": {
     "name": "report",
-    "description": "Spr·va UOTD ozn·menÌ.",
+    "description": "Spr√°va UOTD ozn√°men√≠.",
     "subscribe": {
       "name": "subscribe",
-      "description": "Oznamovat UOTD v tomto textovÈm kan·le nebo jinÈm.",
+      "description": "Oznamovat UOTD v tomto textov√©m kan√°le nebo jin√©m.",
       "other": {
         "name": "other",
-        "description": "Jin˝ kan·l neû tento pro ozn·menÌ UOTD."
+        "description": "Jin√Ω kan√°l ne≈æ tento pro ozn√°men√≠ UOTD."
       }
     },
     "unsubscribe": {
@@ -20,27 +20,27 @@
     },
     "autothread": {
       "name": "autothread",
-      "description": "Povolit nebo zak·zat vytv·¯enÌ vl·ken na UOTD ozn·menÌch."
+      "description": "Povolit nebo zak√°zat vytv√°≈ôen√≠ vl√°ken na UOTD ozn√°men√≠ch."
     }
   },
   "rules": {
     "name": "rules",
-    "description": "JakÈ jsou poûadavky TOTD na ozn·menÌ UOTD?"
+    "description": "Jak√© jsou po≈æadavky TOTD na ozn√°men√≠ UOTD?"
   },
   "help": {
     "name": "help",
-    "description": "Zobrazit n·povÏdu."
+    "description": "Zobrazit n√°povƒõdu."
   },
   "car": {
     "name": "car",
-    "description": "Funkce souvisejÌcÌ s auty.",
+    "description": "Funkce souvisej√≠c√≠ s auty.",
     "emote": {
       "name": "emote",
-      "description": "Zobrazit nebo nastavit emote auta pro ozn·menÌ."
+      "description": "Zobrazit nebo nastavit emote auta pro ozn√°men√≠."
     },
     "format": {
       "name": "format",
-      "description": "Zobrazit nebo nastavit form·t n·zvu auta pro ozn·menÌ."
+      "description": "Zobrazit nebo nastavit form√°t n√°zvu auta pro ozn√°men√≠."
     }
   }
 }

@@ -68,7 +68,7 @@ internal sealed class DiscordBot : IDiscordBot
 
         _logger.LogInformation("Loggin in...");
 
-        await _client.LoginAsync(TokenType.Bot, _config["Discord:Token"]);
+        await _client.LoginAsync(TokenType.Bot, token);
 
         _logger.LogInformation("Starting...");
 
