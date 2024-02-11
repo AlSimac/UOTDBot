@@ -39,9 +39,9 @@ internal sealed class Scheduler : BackgroundService, IScheduler
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Quick test for TOTD report before 19:00
-        if (_env.IsDevelopment() && DateTimeOffset.Now.Day - 1 > 0 && DateTimeOffset.Now.TimeOfDay < TimeSpan.Parse(_config.GetRequiredValue("Scheduler:StartTime")))
+        if (_env.IsDevelopment() && _timeProvider.GetLocalNow().Day - 1 > 0 && _timeProvider.GetLocalNow().TimeOfDay < TimeSpan.Parse(_config.GetRequiredValue("Scheduler:StartTime")))
         {
-            await CheckAndReportTotdAsync(DateTimeOffset.Now.Day - 1, stoppingToken);
+            await CheckAndReportTotdAsync(_timeProvider.GetLocalNow().Day - 1, stoppingToken);
         }
 
         _logger.LogInformation("Starting scheduler...");

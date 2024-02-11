@@ -28,7 +28,8 @@ internal sealed class DiscordBot : IDiscordBot
     private readonly ILogger<DiscordSocketClient> _logger;
     private readonly Version _version;
 
-    public DiscordBot(IServiceProvider provider,
+    public DiscordBot(
+        IServiceProvider provider,
         DiscordSocketClient client,
         InteractionService interactionService,
         IConfiguration config,

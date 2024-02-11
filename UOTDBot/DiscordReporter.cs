@@ -12,14 +12,22 @@ internal sealed class DiscordReporter
 {
     private readonly IDiscordBot _bot;
     private readonly AppDbContext _db;
+    private readonly TimeProvider _timeProvider;
     private readonly IConfiguration _config;
     private readonly ILogger<DiscordReporter> _logger;
     private readonly Version _version;
 
-    public DiscordReporter(IDiscordBot bot, AppDbContext db, IConfiguration config, ILogger<DiscordReporter> logger, Version version)
+    public DiscordReporter(
+        IDiscordBot bot,
+        AppDbContext db,
+        TimeProvider timeProvider,
+        IConfiguration config,
+        ILogger<DiscordReporter> logger,
+        Version version)
     {
         _bot = bot;
         _db = db;
+        _timeProvider = timeProvider;
         _config = config;
         _logger = logger;
         _version = version;
@@ -93,7 +101,7 @@ internal sealed class DiscordReporter
             return null;
         }
 
-        var createdAt = DateTimeOffset.UtcNow;
+        var createdAt = _timeProvider.GetUtcNow();
 
         var reportMessage = new ReportMessage
         {
@@ -172,7 +180,7 @@ internal sealed class DiscordReporter
             return null;
         }
 
-        var createdAt = DateTimeOffset.UtcNow;
+        var createdAt = _timeProvider.GetUtcNow();
 
         var reportMessage = new ReportMessage
         {

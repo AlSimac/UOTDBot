@@ -12,12 +12,14 @@ namespace UOTDBot.Modules;
 public sealed class ReportModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly AppDbContext _db;
+    private readonly TimeProvider _timeProvider;
     private readonly ILogger<ReportModule> _logger;
     private readonly Version _version;
 
-    public ReportModule(AppDbContext db, ILogger<ReportModule> logger, Version version)
+    public ReportModule(AppDbContext db, TimeProvider timeProvider, ILogger<ReportModule> logger, Version version)
     {
         _db = db;
+        _timeProvider = timeProvider;
         _logger = logger;
         _version = version;
     }
@@ -45,7 +47,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
 
         if (reportChannel is null)
         {
-            var createdAt = DateTimeOffset.UtcNow;
+            var createdAt = _timeProvider.GetUtcNow();
 
             reportChannel = new ReportChannel
             {
@@ -73,7 +75,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
                 return;
             }
 
-            reportChannel.UpdatedAt = DateTimeOffset.UtcNow;
+            reportChannel.UpdatedAt = _timeProvider.GetUtcNow();
             reportChannel.ChannelId = channel.Id;
             reportChannel.IsEnabled = true;
         }
@@ -128,7 +130,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         }
 
         reportChannel.IsEnabled = false;
-        reportChannel.UpdatedAt = DateTimeOffset.UtcNow;
+        reportChannel.UpdatedAt = _timeProvider.GetUtcNow();
 
         await _db.SaveChangesAsync();
 
@@ -147,7 +149,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
 
         if (reportUser is null)
         {
-            var createdAt = DateTimeOffset.UtcNow;
+            var createdAt = _timeProvider.GetUtcNow();
 
             reportUser = new ReportUser
             {
@@ -162,7 +164,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         else
         {
             reportUser.IsEnabled = !reportUser.IsEnabled;
-            reportUser.UpdatedAt = DateTimeOffset.UtcNow;
+            reportUser.UpdatedAt = _timeProvider.GetUtcNow();
         }
 
         try
