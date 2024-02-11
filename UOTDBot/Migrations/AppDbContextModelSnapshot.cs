@@ -37,6 +37,11 @@ namespace UOTDBot.Migrations
                     b.HasData(
                         new
                         {
+                            Id = "CarSport",
+                            DisplayName = "StadiumCar"
+                        },
+                        new
+                        {
                             Id = "CarSnow",
                             DisplayName = "SnowCar"
                         },
@@ -132,6 +137,9 @@ namespace UOTDBot.Migrations
                     b.Property<ulong>("ChannelId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("ConfigurationId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -146,7 +154,28 @@ namespace UOTDBot.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ConfigurationId");
+
                     b.ToTable("ReportChannels");
+                });
+
+            modelBuilder.Entity("UOTDBot.Models.ReportConfiguration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Emotes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ReportConfiguration");
                 });
 
             modelBuilder.Entity("UOTDBot.Models.ReportMessage", b =>
@@ -196,6 +225,9 @@ namespace UOTDBot.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("ConfigurationId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -209,6 +241,8 @@ namespace UOTDBot.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ConfigurationId");
 
                     b.ToTable("ReportUsers");
                 });
@@ -239,6 +273,17 @@ namespace UOTDBot.Migrations
                     b.Navigation("Map");
                 });
 
+            modelBuilder.Entity("UOTDBot.Models.ReportChannel", b =>
+                {
+                    b.HasOne("UOTDBot.Models.ReportConfiguration", "Configuration")
+                        .WithMany()
+                        .HasForeignKey("ConfigurationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Configuration");
+                });
+
             modelBuilder.Entity("UOTDBot.Models.ReportMessage", b =>
                 {
                     b.HasOne("UOTDBot.Models.ReportChannel", "Channel")
@@ -260,6 +305,17 @@ namespace UOTDBot.Migrations
                     b.Navigation("DM");
 
                     b.Navigation("Map");
+                });
+
+            modelBuilder.Entity("UOTDBot.Models.ReportUser", b =>
+                {
+                    b.HasOne("UOTDBot.Models.ReportConfiguration", "Configuration")
+                        .WithMany()
+                        .HasForeignKey("ConfigurationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Configuration");
                 });
 
             modelBuilder.Entity("UOTDBot.Models.Map", b =>

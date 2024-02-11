@@ -3,6 +3,7 @@ using Discord;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text;
 using TmEssentials;
 using UOTDBot.Models;
 
@@ -47,7 +48,7 @@ internal sealed class DiscordReporter
                 continue;
             }
 
-            var msg = await ReportInChannelAsync(map, channelId, autoThread: false);
+            var msg = await ReportInChannelAsync(map, channelId, autoThread: false, new());
 
             if (msg is not null)
             {
@@ -56,14 +57,14 @@ internal sealed class DiscordReporter
         }
 
         var enabledReportChannels = await _db.ReportChannels
-            .Where(c => c.IsEnabled)
+            .Where(x => x.IsEnabled)
             .ToListAsync(cancellationToken);
 
         foreach (var reportChannel in enabledReportChannels)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var message = await ReportInChannelAsync(map, reportChannel);
+            var message = await ReportInChannelAsync(map, reportChannel, reportChannel.Configuration);
 
             if (message is not null)
             {
@@ -74,7 +75,7 @@ internal sealed class DiscordReporter
         var dmCount = 0;
 
         var enabledReportDms = await _db.ReportUsers
-            .Where(c => c.IsEnabled)
+            .Where(x => x.IsEnabled)
             .ToListAsync(cancellationToken);
 
         foreach (var reportUser in enabledReportDms)
@@ -92,9 +93,9 @@ internal sealed class DiscordReporter
         _logger.LogInformation("Reported UOTD to {ChannelCount} channels and {DmCount} DMs.", reportCount, dmCount);
     }
 
-    private async Task<ReportMessage?> ReportInChannelAsync(Map map, ReportChannel channel)
+    private async Task<ReportMessage?> ReportInChannelAsync(Map map, ReportChannel channel, ReportConfiguration config)
     {
-        var message = await ReportInChannelAsync(map, channel.ChannelId, channel.AutoThread);
+        var message = await ReportInChannelAsync(map, channel.ChannelId, channel.AutoThread, config);
 
         if (message is null)
         {
@@ -119,7 +120,7 @@ internal sealed class DiscordReporter
         return reportMessage;
     }
 
-    private async Task<IUserMessage?> ReportInChannelAsync(Map map, ulong channelId, bool autoThread)
+    private async Task<IUserMessage?> ReportInChannelAsync(Map map, ulong channelId, bool autoThread, ReportConfiguration config)
     {
         _logger.LogInformation("Sending UOTD report to channel {ChannelId}...", channelId);
 
@@ -127,7 +128,7 @@ internal sealed class DiscordReporter
 
         try
         {
-            var embed = CreateEmbed(map);
+            var embed = CreateEmbed(map, config);
 
             message = await _bot.SendMessageAsync(channelId, embed: embed);
         }
@@ -170,7 +171,7 @@ internal sealed class DiscordReporter
 
         try
         {
-            var embed = CreateEmbed(map);
+            var embed = CreateEmbed(map, reportUser.Configuration);
 
             message = await user.SendMessageAsync(embed: embed);
         }
@@ -197,7 +198,7 @@ internal sealed class DiscordReporter
         return reportMessage;
     }
 
-    private Embed CreateEmbed(Map map)
+    private Embed CreateEmbed(Map map, ReportConfiguration config)
     {
         var length = map.AuthorTime.TotalMilliseconds + 1000;
         var minutes = length / 60000;
@@ -206,12 +207,35 @@ internal sealed class DiscordReporter
         var lengthString = $"{seconds} sec";
         if (minutes > 0) lengthString = $"{minutes} min, {lengthString}";
 
+        var sbFeatures = new StringBuilder();
+
+        if (map.Features.DefaultCar.Id != "CarSport")
+        {
+            sbFeatures.Append("**");
+            sbFeatures.Append(map.Features.DefaultCar.GetName(config));
+            sbFeatures.AppendLine("** (default car)");
+        }
+
+        if (map.Features.Gates.Count > 0)
+        {
+            sbFeatures.AppendLine("Transformation:");
+
+            foreach (var gateCar in map.Features.Gates)
+            {
+                sbFeatures.AppendLine($"- {gateCar.GetName(config)}");
+            }
+        }
+        else
+        {
+            sbFeatures.AppendLine("No transformation");
+        }
+
         return new EmbedBuilder()
             .WithTitle("New United TOTD!")
             .WithFields(
                 new EmbedFieldBuilder { Name = "Map", Value = $"[{TextFormatter.Deformat(map.Name)}](https://trackmania.io/#/leaderboard/{map.MapUid})", IsInline = true },
                 new EmbedFieldBuilder { Name = "Length", Value = $"~{lengthString}", IsInline = true },
-                new EmbedFieldBuilder { Name = "Features", Value = "SnowCar", IsInline = true },
+                new EmbedFieldBuilder { Name = "Features", Value = sbFeatures.ToString(), IsInline = true },
                 new EmbedFieldBuilder { Name = "Size", Value = ByteSize.FromBytes(map.FileSize), IsInline = true },
                 new EmbedFieldBuilder { Name = "Uploaded", Value = TimestampTag.FromDateTimeOffset(map.UploadedAt, TimestampTagStyles.Relative), IsInline = true },
                 new EmbedFieldBuilder { Name = "Updated", Value = TimestampTag.FromDateTimeOffset(map.UpdatedAt, TimestampTagStyles.Relative), IsInline = true })

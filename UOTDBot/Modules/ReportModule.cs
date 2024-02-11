@@ -56,7 +56,8 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
                 IsEnabled = true,
                 AutoThread = false,
                 CreatedAt = createdAt,
-                UpdatedAt = createdAt
+                UpdatedAt = createdAt,
+                Configuration = new()
             };
 
             await _db.ReportChannels.AddAsync(reportChannel);
@@ -156,7 +157,8 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
                 UserId = Context.User.Id,
                 IsEnabled = true,
                 CreatedAt = createdAt,
-                UpdatedAt = createdAt
+                UpdatedAt = createdAt,
+                Configuration = new()
             };
 
             await _db.ReportUsers.AddAsync(reportUser);
@@ -191,32 +193,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
     [SlashCommand("list", "Gets the list of UOTD reports, including the map information.")]
     public async Task List()
     {
-        if (Context.User is not IGuildUser guildUser)
-        {
-            await RespondAsync(embed: new EmbedBuilder()
-                .WithDescription("This command only works on a server.").Build(),
-                    ephemeral: true);
-            return;
-        }
-
-        var reportChannel = await _db.ReportChannels
-            .FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id && c.IsEnabled);
-
-        if (reportChannel is null)
-        {
-            await RespondAsync(embed: new EmbedBuilder()
-                .WithDescription("This server is not subscribed to UOTD reports.").Build(),
-                    ephemeral: true);
-            return;
-        }
-
-        var reports = await _db.ReportMessages
-            .Include(r => r.Map)
-            .Include(r => r.Channel)
-            .Where(r => r.Channel != null && r.Channel.ChannelId == reportChannel.ChannelId)
-            .OrderByDescending(r => r.CreatedAt)
-            .Take(10)
-            .ToListAsync();
+        var reports = await GetReportMessagesAsync();
 
         if (reports.Count == 0)
         {
@@ -227,7 +204,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine($"Last {reports.Count} UOTD reports in {MentionUtils.MentionChannel(reportChannel.ChannelId)}:");
+        sb.AppendLine($"Last {reports.Count} UOTD reports:");
         sb.AppendLine();
 
         foreach (var report in reports)
@@ -240,6 +217,55 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
             .WithTitle("UOTD reports")
             .WithDescription(sb.ToString()).Build(),
                 ephemeral: true);
+    }
+
+    private async Task<List<ReportMessage>> GetReportMessagesAsync(int count = 10)
+    {
+        if (Context.User is IGuildUser)
+        {
+            var reportChannel = await _db.ReportChannels
+                .FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id && c.IsEnabled);
+
+            if (reportChannel is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("This server is not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return [];
+            }
+
+            return await _db.ReportMessages
+                .Include(r => r.Map)
+                .Include(r => r.Channel)
+                .Where(r => r.Channel != null && r.Channel.ChannelId == reportChannel.ChannelId)
+                .OrderByDescending(r => r.CreatedAt)
+                .Take(count)
+                .ToListAsync();
+        }
+
+        if (Context.Channel is IDMChannel)
+        {
+            var reportUser = await _db.ReportUsers
+                .FirstOrDefaultAsync(c => c.UserId == Context.User.Id && c.IsEnabled);
+
+            if (reportUser is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You are not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return [];
+            }
+
+            return await _db.ReportMessages
+                .Include(r => r.Map)
+                .Include(r => r.DM)
+                .Where(r => r.DM != null && r.DM.UserId == reportUser.UserId)
+                .OrderByDescending(r => r.CreatedAt)
+                .Take(count)
+                .ToListAsync();
+        }
+
+        return [];
     }
 
     [SlashCommand("autothread", "Enables or disables creation of threads on UOTD reports.")]
@@ -323,6 +349,104 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
                 .WithDescription($"Test report sent to {MentionUtils.MentionChannel(reportChannel.ChannelId)}.\n**Test report:** {testMsg.GetJumpUrl()}").Build(),
                     ephemeral: true);
         }
+    }
+
+    [SlashCommand("emote", "Get or set the emotes for reports.")]
+    public async Task Emote([
+        Choice("SnowCar", "CarSnow"),
+        Choice("RallyCar", "CarRally"),
+        Choice("DesertCar", "CarDesert")] string type,
+        string? emote = null,
+        bool reset = false)
+    {
+        var config = default(ReportConfiguration);
+
+        if (Context.User is IGuildUser guildUser)
+        {
+            if (!guildUser.GuildPermissions.ManageChannels)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You need the `Manage Channels` permission to use this command.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            var reportChannel = await _db.ReportChannels
+                .Include(x => x.Configuration)
+                .FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
+
+            if (reportChannel is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("This server is not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            config = reportChannel.Configuration;
+        }
+        else if (Context.Channel is IDMChannel)
+        {
+            var reportUser = await _db.ReportUsers
+                .Include(x => x.Configuration)
+                .FirstOrDefaultAsync(c => c.UserId == Context.User.Id);
+
+            if (reportUser is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You are not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            config = reportUser.Configuration;
+        }
+
+        if (config is null)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("Not subscribed to UOTD reports.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        if (reset)
+        {
+            var isRemoved = config.Emotes.Remove(type);
+
+            await _db.SaveChangesAsync();
+
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription(isRemoved
+                ? $"Emote for {type} has been reset."
+                : $"Emote for {type} has already been reset.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        string emoteStr;
+
+        if (Discord.Emote.TryParse(emote, out var emoteModel))
+        {
+            emoteStr = emoteModel.ToString();
+        }
+        else if (Emoji.TryParse(emote, out var emojiModel))
+        {
+            emoteStr = emojiModel.ToString();
+        }
+        else
+        {
+            await RespondAsync("Invalid emote.");
+            return;
+        }
+
+        config.Emotes[type] = emoteStr;
+
+        await _db.SaveChangesAsync();
+
+        await RespondAsync(embed: new EmbedBuilder()
+            .WithDescription($"Emote for **{type}** set to {emoteStr}.").Build(),
+                ephemeral: true);
     }
 
     private async Task<bool> ValidateManageChannelsPermissionAsync()

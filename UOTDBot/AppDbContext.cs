@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Extensions.Hosting;
+using System.Text.Json;
 using TmEssentials;
 using UOTDBot.Models;
 
@@ -29,8 +29,15 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
             .HasConversion(new DateTimeOffsetToBinaryConverter());
 
         modelBuilder.Entity<Car>().HasData(
+            new Car { Id = "CarSport", DisplayName = "StadiumCar" },
             new Car { Id = "CarSnow", DisplayName = "SnowCar" },
             new Car { Id = "CarRally", DisplayName = "RallyCar" },
             new Car { Id = "CarDesert", DisplayName = "DesertCar" });
+
+        modelBuilder.Entity<ReportConfiguration>()
+            .Property(x => x.Emotes)
+            .HasConversion(
+                x => JsonSerializer.Serialize(x, AppJsonContext.Default.DictionaryStringString),
+                x => JsonSerializer.Deserialize(x, AppJsonContext.Default.DictionaryStringString) ?? new());
     }
 }

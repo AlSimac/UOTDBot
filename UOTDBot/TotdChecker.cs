@@ -95,6 +95,15 @@ internal sealed class TotdChecker
             return null;
         }*/
 
+        // weird EF core hacks
+        features.DefaultCar = _db.Cars.Find(features.DefaultCar.Id)!;
+
+        foreach (var gate in features.Gates)
+        {
+            gate.DisplayName = _db.Cars.Find(gate.Id)?.DisplayName;
+        }
+        //
+
         await _db.AddAsync(features, cancellationToken);
 
         mapModel = new Map

@@ -1,5 +1,8 @@
 ﻿namespace UOTDBot.Models;
 
-internal class ReportConfiguration
+public sealed class ReportConfiguration
 {
+    public int Id { get; set; }
+    public string Format { get; set; } = "standard";
+    public Dictionary<string, string> Emotes { get; set; } = [];
 }
