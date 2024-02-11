@@ -14,4 +14,6 @@ public sealed class Map
     public required int FileSize { get; set; }
     public required DateTimeOffset UploadedAt { get; set; }
     public required DateTimeOffset UpdatedAt { get; set; }
+    public required MapFeatures Features { get; set; }
+    public required DateOnly Totd { get; set; }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Hosting;
 using TmEssentials;
 using UOTDBot.Models;
 
@@ -11,6 +12,7 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<ReportChannel> ReportChannels { get; set; }
     public DbSet<ReportUser> ReportUsers { get; set; }
     public DbSet<ReportMessage> ReportMessages { get; set; }
+    public DbSet<Car> Cars { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,5 +27,10 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
             .Entity<ReportMessage>()
             .Property(x => x.CreatedAt)
             .HasConversion(new DateTimeOffsetToBinaryConverter());
+
+        modelBuilder.Entity<Car>().HasData(
+            new Car { Id = "CarSnow", DisplayName = "SnowCar" },
+            new Car { Id = "CarRally", DisplayName = "RallyCar" },
+            new Car { Id = "CarDesert", DisplayName = "DesertCar" });
     }
 }

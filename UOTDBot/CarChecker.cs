@@ -2,43 +2,20 @@
 using GBX.NET;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using UOTDBot.Models;
+using System.Collections.Immutable;
 
 namespace UOTDBot;
 
 internal sealed class CarChecker
 {
+    private static readonly ImmutableArray<string> environments = ["Snow", "Rally", "Desert", "Stadium"];
+
     private readonly ILogger<CarChecker> _logger;
 
     public CarChecker(ILogger<CarChecker> logger)
     {
         _logger = logger;
-    }
-
-    public void CheckMap(Stream stream)
-    {
-        var map = LoadGBX(stream);
-        CheckMap(map);
-    }
-
-    public void CheckMap(CGameCtnChallenge map)
-    {
-        List<string> resultList = getAllCars(map);
-
-        // 01/01/2024 Do something only if the list isn't empty
-        if (resultList != null)
-        {
-
-            // 01/01/2024 maybe add a car emote idk
-            foreach (string result in resultList)
-            {
-                _logger.LogInformation(result);
-            }
-        }
-
-        else
-        {
-            _logger.LogInformation("nothing");
-        }
     }
 
     // 02/09/2020 Load the GBX
@@ -55,73 +32,78 @@ internal sealed class CarChecker
         return map;
     }
 
-    // 01/01/2024 Main method to check the default car and all car change gates
-    private List<String> getAllCars(CGameCtnChallenge map)
+    public MapFeatures CheckMap(Stream stream, out bool isUotd)
     {
-        _logger.LogInformation("< Start Scheduler.getAllCars");
+        var map = LoadGBX(stream);
+        return CheckMap(map, out isUotd);
+    }
 
-        _logger.LogInformation("[-- Reading cars played in {0} --]", map.MapName);
+    // 01/01/2024 Main method to check the default car and all car change gates
+    private MapFeatures CheckMap(CGameCtnChallenge map, out bool isUotd)
+    {
+        _logger.LogInformation("Reading cars played in {MapName}...", map.MapName);
 
-        List<String> carList = new List<String>();
-        bool alert = false;
-        string defaultCar = map.PlayerModel.Id;
+        var defaultCar = map.PlayerModel?.Id;
+        var gates = new HashSet<string>();
 
         // 01/01/2024 if PlayerModel is empty, it's CarSport
-        if (defaultCar == "")
+        if (string.IsNullOrEmpty(defaultCar))
         {
             defaultCar = "CarSport";
         }
 
-        carList.Add(defaultCar);
+        isUotd = defaultCar != "CarSport";
 
-        // 01/01/2024 if CarSport, check if there are car change Gates
-        if (defaultCar == "CarSport" || defaultCar == null)
+        foreach (var env in environments)
         {
             // 01/01/2024 loop on blocks
-            foreach (CGameCtnBlock block in map.GetBlocks())
+            foreach (var block in map.GetBlocks())
             {
                 // 01/01/2024 Need to find a better way to get all car change blocks
-                if (block.Name.Contains("GameplaySnow"))
+                // 10/02/2024 I think this is the best way until Nadeo adds more features
+                if (!block.Name.Contains($"Gameplay{env}"))
                 {
-                    _logger.LogInformation("Found a car change gate block");
-                    carList.Add("CarSnow");
-                    alert = true;
+                    continue;
+                }
+
+                _logger.LogInformation("Found a car change gate block");
+                gates.Add($"Car{env}");
+
+                if (!isUotd && env != "Stadium")
+                {
+                    isUotd = true;
                 }
             }
 
-            foreach (CGameCtnAnchoredObject item in map.GetAnchoredObjects())
+            foreach (var item in map.GetAnchoredObjects())
             {
-
                 // 01/01/2024 and also a better way to list the cars
-                if (item.ItemModel.Id.Contains("GameplaySnow"))
+                // 10/02/2024 I think this is the best way until Nadeo adds more features
+                if (!item.ItemModel.Id.Contains($"Gameplay{env}"))
                 {
-                    _logger.LogInformation("Found a car change gate item");
-                    carList.Add("CarSnow");
-                    alert = true;
+                    continue;
+                }
+
+                _logger.LogInformation("Found a car change gate item");
+                gates.Add($"Car{env}");
+
+                if (!isUotd && env != "Stadium")
+                {
+                    isUotd = true;
                 }
             }
         }
 
-        // 01/01/2024 if default car is anything else, return true
-        else
+        var features = new MapFeatures
         {
-            _logger.LogInformation("Default car: {DefaultCar}", defaultCar);
-            alert = true;
+            DefaultCar = new Car { Id = defaultCar }
+        };
+
+        foreach (var gate in gates)
+        {
+            features.Gates.Add(new Car { Id = gate });
         }
 
-        // 01/01/2024 if there's something else than CarSport, return the list
-        if (alert == true)
-        {
-            carList = carList.Distinct().ToList();
-            _logger.LogInformation("> End Scheduler.getAllCars");
-            return carList;
-        }
-
-        // 01/01/2024 otherwise return null
-        else
-        {
-            _logger.LogInformation("> End Scheduler.getAllCars");
-            return null;
-        }
+        return features;
     }
 }

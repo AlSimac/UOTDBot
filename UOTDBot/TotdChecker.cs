@@ -87,7 +87,15 @@ internal sealed class TotdChecker
 
         using var mapStream = await mapResponse.Content.ReadAsStreamAsync(cancellationToken);
 
-        _carChecker.CheckMap(mapStream);
+        var features = _carChecker.CheckMap(mapStream, out var isUotd);
+
+        /*if (!isUotd)
+        {
+            _logger.LogInformation("Map is not an UOTD (MapUid: {MapUid}).", dayInfo.MapUid);
+            return null;
+        }*/
+
+        await _db.AddAsync(features);
 
         mapModel = new Map
         {
@@ -100,6 +108,8 @@ internal sealed class TotdChecker
             FileSize = (int)mapResponse.Content.Headers.ContentLength.GetValueOrDefault(),
             UploadedAt = mapInfo.UploadTimestamp,
             UpdatedAt = mapInfo.UpdateTimestamp,
+            Features = features,
+            Totd = new DateOnly(month.Year, month.Month, dayInfo.MonthDay)
         };
 
         await _db.Maps.AddAsync(mapModel, cancellationToken);

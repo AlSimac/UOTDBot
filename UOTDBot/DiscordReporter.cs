@@ -207,6 +207,7 @@ internal sealed class DiscordReporter
                 new EmbedFieldBuilder { Name = "Updated", Value = TimestampTag.FromDateTimeOffset(map.UpdatedAt, TimestampTagStyles.Relative), IsInline = true })
             .WithThumbnailUrl(map.ThumbnailUrl)
             .WithCurrentTimestamp()
+            .WithFooter($"UOTD v0.0.0 | TOTD")
             .Build();
     }
 }

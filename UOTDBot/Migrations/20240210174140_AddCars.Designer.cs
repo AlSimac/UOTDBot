@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UOTDBot;
 
@@ -10,9 +11,11 @@ using UOTDBot;
 namespace UOTDBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240210174140_AddCars")]
+    partial class AddCars
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.1");
@@ -33,23 +36,6 @@ namespace UOTDBot.Migrations
                     b.HasIndex("MapFeaturesId");
 
                     b.ToTable("Cars");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "CarSnow",
-                            DisplayName = "SnowCar"
-                        },
-                        new
-                        {
-                            Id = "CarRally",
-                            DisplayName = "RallyCar"
-                        },
-                        new
-                        {
-                            Id = "CarDesert",
-                            DisplayName = "DesertCar"
-                        });
                 });
 
             modelBuilder.Entity("UOTDBot.Models.Map", b =>
@@ -81,9 +67,6 @@ namespace UOTDBot.Migrations
 
                     b.Property<string>("ThumbnailUrl")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateOnly>("Totd")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
