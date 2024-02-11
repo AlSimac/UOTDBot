@@ -414,13 +414,32 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         {
             var isRemoved = config.Emotes.Remove(type);
 
+            config.Emotes = new Dictionary<string, string>(config.Emotes); // ef core leol
+
             await _db.SaveChangesAsync();
 
             await RespondAsync(embed: new EmbedBuilder()
                 .WithDescription(isRemoved
-                ? $"Emote for {type} has been reset."
-                : $"Emote for {type} has already been reset.").Build(),
+                ? $"Emote for `{type}` has been reset."
+                : $"Emote for `{type}` has already been reset.").Build(),
                     ephemeral: true);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(emote))
+        {
+            if (config.Emotes.TryGetValue(type, out var currentEmote) && !string.IsNullOrWhiteSpace(currentEmote))
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription($"Emote for `{type}` is {currentEmote}").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription($"Emote for `{type}` is not set.").Build(),
+                    ephemeral: true);
+
             return;
         }
 
@@ -436,16 +455,21 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         }
         else
         {
-            await RespondAsync("Invalid emote.");
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("Invalid emote.").Build(),
+                    ephemeral: true);
             return;
         }
 
-        config.Emotes[type] = emoteStr;
+        config.Emotes = new Dictionary<string, string>(config.Emotes)
+        {
+            [type] = emoteStr
+        };
 
         await _db.SaveChangesAsync();
 
         await RespondAsync(embed: new EmbedBuilder()
-            .WithDescription($"Emote for **{type}** set to {emoteStr}.").Build(),
+            .WithDescription($"Emote for `{type}` set to {emoteStr}").Build(),
                 ephemeral: true);
     }
 
