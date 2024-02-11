@@ -16,4 +16,6 @@ public sealed class Map
     public required DateTimeOffset UpdatedAt { get; set; }
     public required MapFeatures Features { get; set; }
     public required DateOnly Totd { get; set; }
+    public required Guid AuthorGuid { get; set; }
+    public string? AuthorName { get; set; }
 }

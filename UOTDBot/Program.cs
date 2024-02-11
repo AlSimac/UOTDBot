@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 
 using Polly;
 using Polly.Contrib.WaitAndRetry;
+using ManiaAPI.TrackmaniaIO;
 
 GBX.NET.Lzo.SetLzo(typeof(MiniLZO));
 
@@ -25,6 +26,11 @@ builder.ConfigureServices((context, services) =>
         ));
 
     services.AddHttpClient<NadeoClubServices>()
+        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+        ));
+
+    services.AddHttpClient<TrackmaniaIO>()
         .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
             Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
         ));
@@ -71,6 +77,8 @@ builder.ConfigureServices((context, services) =>
         provider => new(provider.GetRequiredService<HttpClient>()));
     services.AddSingleton<NadeoClubServices>(
         provider => new(provider.GetRequiredService<HttpClient>()));
+    services.AddSingleton<TrackmaniaIO>(
+        provider => new(provider.GetRequiredService<HttpClient>(), "UOTDBot by Poutrel and BigBang1112"));
 
     services.AddSingleton<Version>(provider => typeof(Program).Assembly.GetName().Version ?? new Version());
 

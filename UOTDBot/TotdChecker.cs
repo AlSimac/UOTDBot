@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using ManiaAPI.NadeoAPI;
 using Microsoft.EntityFrameworkCore;
-using UOTDBot.Models;
+using ManiaAPI.TrackmaniaIO;
 
 namespace UOTDBot;
 
@@ -9,6 +9,7 @@ internal sealed class TotdChecker
 {
     private readonly NadeoLiveServices _nls;
     private readonly NadeoClubServices _ncs;
+    private readonly TrackmaniaIO _tmio;
     private readonly HttpClient _http;
     private readonly CarChecker _carChecker;
     private readonly AppDbContext _db;
@@ -17,6 +18,7 @@ internal sealed class TotdChecker
     public TotdChecker(
         NadeoLiveServices nls,
         NadeoClubServices ncs,
+        TrackmaniaIO tmio,
         HttpClient http,
         CarChecker carChecker,
         AppDbContext db,
@@ -24,13 +26,14 @@ internal sealed class TotdChecker
     {
         _nls = nls;
         _ncs = ncs;
+        _tmio = tmio;
         _http = http;
         _carChecker = carChecker;
         _db = db;
         _logger = logger;
     }
 
-    public async Task<Map?> CheckAsync(int day, CancellationToken cancellationToken)
+    public async Task<Models.Map?> CheckAsync(int day, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Checking for TOTD...");
 
@@ -95,6 +98,19 @@ internal sealed class TotdChecker
             return null;
         }*/
 
+        // TM.IO get map not tested enough, make sure to not crash if it fails
+        var authorName = default(string);
+        
+        try
+        {
+            var mapOnTmIo = await _tmio.GetMapInfoAsync(mapInfo.Uid, cancellationToken);
+            authorName = mapOnTmIo.AuthorPlayer.Name;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get map info from trackmania.io (MapUid: {MapUid}).", dayInfo.MapUid);
+        }
+
         // weird EF core hacks
         features.DefaultCar = _db.Cars.Find(features.DefaultCar.Id)!;
 
@@ -106,7 +122,7 @@ internal sealed class TotdChecker
 
         await _db.AddAsync(features, cancellationToken);
 
-        mapModel = new Map
+        mapModel = new Models.Map
         {
             MapId = mapInfo.MapId,
             MapUid = mapInfo.Uid,
@@ -118,7 +134,9 @@ internal sealed class TotdChecker
             UploadedAt = mapInfo.UploadTimestamp,
             UpdatedAt = mapInfo.UpdateTimestamp,
             Features = features,
-            Totd = new DateOnly(month.Year, month.Month, dayInfo.MonthDay)
+            Totd = new DateOnly(month.Year, month.Month, dayInfo.MonthDay),
+            AuthorGuid = mapInfo.Author,
+            AuthorName = authorName
         };
 
         await _db.Maps.AddAsync(mapModel, cancellationToken);

@@ -230,15 +230,24 @@ internal sealed class DiscordReporter
             sbFeatures.AppendLine("No transformation");
         }
 
+        var fields = new List<EmbedFieldBuilder>
+        {
+            new() { Name = "Map", Value = $"[{TextFormatter.Deformat(map.Name)}](https://trackmania.io/#/leaderboard/{map.MapUid})", IsInline = true },
+            new() { Name = "Length", Value = $"~{lengthString}", IsInline = true },
+            new() { Name = "Features", Value = sbFeatures.ToString(), IsInline = true }
+        };
+
+        if (!string.IsNullOrEmpty(map.AuthorName))
+        {
+            fields.Add(new EmbedFieldBuilder { Name = "Author", Value = $"[{map.AuthorName}](https://trackmania.io/#/player/{map.AuthorGuid})", IsInline = true });
+        }
+
+        fields.Add(new EmbedFieldBuilder { Name = "Size", Value = ByteSize.FromBytes(map.FileSize), IsInline = true });
+        fields.Add(new EmbedFieldBuilder { Name = "Updated", Value = TimestampTag.FromDateTimeOffset(map.UpdatedAt, TimestampTagStyles.Relative), IsInline = true });
+
         return new EmbedBuilder()
             .WithTitle("New United TOTD!")
-            .WithFields(
-                new EmbedFieldBuilder { Name = "Map", Value = $"[{TextFormatter.Deformat(map.Name)}](https://trackmania.io/#/leaderboard/{map.MapUid})", IsInline = true },
-                new EmbedFieldBuilder { Name = "Length", Value = $"~{lengthString}", IsInline = true },
-                new EmbedFieldBuilder { Name = "Features", Value = sbFeatures.ToString(), IsInline = true },
-                new EmbedFieldBuilder { Name = "Size", Value = ByteSize.FromBytes(map.FileSize), IsInline = true },
-                new EmbedFieldBuilder { Name = "Uploaded", Value = TimestampTag.FromDateTimeOffset(map.UploadedAt, TimestampTagStyles.Relative), IsInline = true },
-                new EmbedFieldBuilder { Name = "Updated", Value = TimestampTag.FromDateTimeOffset(map.UpdatedAt, TimestampTagStyles.Relative), IsInline = true })
+            .WithFields(fields)
             .WithThumbnailUrl(map.ThumbnailUrl)
             .WithCurrentTimestamp()
             .WithFooter($"UOTD {_version.ToString(3)} | TOTD")
