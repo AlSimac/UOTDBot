@@ -211,6 +211,12 @@ internal sealed class DiscordReporter
 
         if (map.Features.DefaultCar.Id != "CarSport")
         {
+            if (config.Emotes.TryGetValue(map.Features.DefaultCar.Id, out var emote) && !string.IsNullOrWhiteSpace(emote))
+            {
+                sbFeatures.Append(emote);
+                sbFeatures.Append(' ');
+            }
+
             sbFeatures.Append("**");
             sbFeatures.Append(map.Features.DefaultCar.GetName(config));
             sbFeatures.AppendLine("** (default car)");
@@ -222,7 +228,15 @@ internal sealed class DiscordReporter
 
             foreach (var gateCar in map.Features.Gates)
             {
-                sbFeatures.AppendLine($"- {gateCar.GetName(config)}");
+                sbFeatures.Append("- ");
+
+                if (config.Emotes.TryGetValue(gateCar.Id, out var emote) && !string.IsNullOrWhiteSpace(emote))
+                {
+                    sbFeatures.Append(emote);
+                    sbFeatures.Append(' ');
+                }
+
+                sbFeatures.AppendLine(gateCar.GetName(config));
             }
         }
         else
