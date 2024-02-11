@@ -1,0 +1,28 @@
+name: Docker Image Push to ghcr.io
+
+on:
+  push:
+    branches: [ "master" ]
+
+env:
+  BUILD_DIR: UOTDBot
+  IMAGE_NAME: uotd-bot
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Login to ghcr.io
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u USERNAME --password-stdin
+    - name: Set lowercase repository_owner
+      run: |
+        echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+      env:
+        OWNER: '${{ github.repository_owner }}'
+    - name: Build Docker Image
+      run: docker build . -f $BUILD_DIR/Dockerfile -t ghcr.io/$OWNER_LC/$IMAGE_NAME:latest --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+    - name: Push the Docker image
+      run: docker push ghcr.io/$OWNER_LC/$IMAGE_NAME:latest
