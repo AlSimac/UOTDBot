@@ -10,16 +10,16 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-		<DockerfileContext>..\..</DockerfileContext>
 	</PropertyGroup>
 
 	<PropertyGroup>
 		<InvariantGlobalization>false</InvariantGlobalization>
 		<PublishAot>false</PublishAot>
+		<PublishSingleFile>true</PublishSingleFile>
 		<PublishTrimmed>true</PublishTrimmed>
 		<TrimMode>partial</TrimMode>
-		<PublishSingleFile>true</PublishSingleFile>
 		<PublishReadyToRun>true</PublishReadyToRun>
+		<PublishSelfContained>true</PublishSelfContained>
 		<UserSecretsId>67012a1b-c03a-4cec-8bc3-5dfb755d1fdc</UserSecretsId>
 	</PropertyGroup>
 
