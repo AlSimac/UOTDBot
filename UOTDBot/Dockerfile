@@ -17,6 +17,8 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish -c $BUILD_CONFIGURATION -o /app/publish -r linux-musl-x64 --self-contained
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine AS final
+RUN apk add --no-cache icu-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=0
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "UOTDBot.dll"]
+ENTRYPOINT ["./UOTDBot"]
