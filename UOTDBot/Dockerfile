@@ -19,4 +19,4 @@ RUN dotnet publish -c $BUILD_CONFIGURATION -o /app/publish -r linux-musl-x64 --s
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["./UOTDBot"]
+ENTRYPOINT ["dotnet", "UOTDBot.dll"]
