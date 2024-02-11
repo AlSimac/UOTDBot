@@ -92,11 +92,11 @@ internal sealed class TotdChecker
 
         var features = _carChecker.CheckMap(mapStream, out var isUotd);
 
-        /*if (!isUotd)
+        if (!isUotd)
         {
             _logger.LogInformation("Map is not an UOTD (MapUid: {MapUid}).", dayInfo.MapUid);
             return null;
-        }*/
+        }
 
         // TM.IO get map not tested enough, make sure to not crash if it fails
         var authorName = default(string);
