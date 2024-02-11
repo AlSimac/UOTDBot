@@ -26,13 +26,15 @@ internal sealed class DiscordBot : IDiscordBot
     private readonly IConfiguration _config;
     private readonly IHostEnvironment _env;
     private readonly ILogger<DiscordSocketClient> _logger;
+    private readonly Version _version;
 
     public DiscordBot(IServiceProvider provider,
         DiscordSocketClient client,
         InteractionService interactionService,
         IConfiguration config,
         IHostEnvironment env,
-        ILogger<DiscordSocketClient> logger)
+        ILogger<DiscordSocketClient> logger,
+        Version version)
     {
         _provider = provider;
         _env = env;
@@ -40,6 +42,7 @@ internal sealed class DiscordBot : IDiscordBot
         _interactionService = interactionService;
         _config = config;
         _logger = logger;
+        _version = version;
     }
 
     public async Task StartAsync()
@@ -114,6 +117,15 @@ internal sealed class DiscordBot : IDiscordBot
 
     private async Task ClientReady()
     {
+        var versionStr = _version.ToString(3);
+
+        if (_version.Major == 0)
+        {
+            versionStr += " (beta)";
+        }
+
+        await _client.SetCustomStatusAsync(versionStr);
+
         // Does not need to be called every Ready event
         await RegisterCommandsAsync(deleteMissing: true);
     }

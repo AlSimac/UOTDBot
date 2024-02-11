@@ -5,19 +5,22 @@ namespace UOTDBot.Modules;
 
 public sealed class RulesModule : InteractionModuleBase<SocketInteractionContext>
 {
+    private readonly Version _version;
+
+    public RulesModule(Version version)
+    {
+        _version = version;
+    }
+
     [SlashCommand("rules", "What are the requirements of TOTD to be reported by UOTD?")]
     public async Task Rules()
     {
         await RespondAsync(embed: new EmbedBuilder()
-            .WithTitle("UOTD Rules")
-            .WithDescription("The UOTD must be a Time of the Day (TOTD) map.")
-            .AddField("1. Map Type", "The map must be a Time of the Day (TOTD) map.")
-            .AddField("2. Map Size", "The map must be 90x90 or larger.")
-            .AddField("3. Map Environment", "The map must be a Stadium map.")
-            .AddField("4. Map Author Time", "The map must have an author time of 45 seconds or less.")
-            .AddField("5. Map Thumbnail", "The map must have a thumbnail.")
-            .AddField("6. Map Download", "The map must have a download link.")
-            .WithColor(Color.Blue)
+            .WithTitle("Rules")
+            .WithDescription("For a TOTD to be considered UOTD, the map contains one of these cars:\n- **SnowCar**\n- **RallyCar**\n- **DesertCar**")
+            .AddField("Default car", "If the map has a different default car than StadiumCar (CarSport), the TOTD is considered UOTD. *In technical terms:*\n```\nCGameCtnChallenge.PlayerModel.Id\n  is not null\n  and not empty\n  and not CarSport```")
+            .AddField("Transformation gates", "If the map has transformation gates that are different than Stadium, the TOTD is considered UOTD. *In technical terms:*\n```\nfor each env in [Snow, Rally, Desert]:\n  for each block in CGameCtnChallenge.Blocks:\n    block.Name contains Gameplay{env}\n  for each item in CGameCtnChallenge.AnchoredObjects:\n    item.ItemModel.Id contains Gameplay{env}```")
+            .WithFooter($"UOTD {_version.ToString(3)}")
             .Build());
     }
 }

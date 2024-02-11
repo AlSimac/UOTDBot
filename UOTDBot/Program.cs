@@ -72,6 +72,8 @@ builder.ConfigureServices((context, services) =>
     services.AddSingleton<NadeoClubServices>(
         provider => new(provider.GetRequiredService<HttpClient>()));
 
+    services.AddSingleton<Version>(provider => typeof(Program).Assembly.GetName().Version ?? new Version());
+
 });
 
 // Use Serilog

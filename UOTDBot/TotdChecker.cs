@@ -95,7 +95,7 @@ internal sealed class TotdChecker
             return null;
         }*/
 
-        await _db.AddAsync(features);
+        await _db.AddAsync(features, cancellationToken);
 
         mapModel = new Map
         {

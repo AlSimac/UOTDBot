@@ -14,13 +14,15 @@ internal sealed class DiscordReporter
     private readonly AppDbContext _db;
     private readonly IConfiguration _config;
     private readonly ILogger<DiscordReporter> _logger;
+    private readonly Version _version;
 
-    public DiscordReporter(IDiscordBot bot, AppDbContext db, IConfiguration config, ILogger<DiscordReporter> logger)
+    public DiscordReporter(IDiscordBot bot, AppDbContext db, IConfiguration config, ILogger<DiscordReporter> logger, Version version)
     {
         _bot = bot;
         _db = db;
         _config = config;
         _logger = logger;
+        _version = version;
     }
 
     public async Task ReportInChannelsAsync(Map map, CancellationToken cancellationToken)
@@ -187,7 +189,7 @@ internal sealed class DiscordReporter
         return reportMessage;
     }
 
-    private static Embed CreateEmbed(Map map)
+    private Embed CreateEmbed(Map map)
     {
         var length = map.AuthorTime.TotalMilliseconds + 1000;
         var minutes = length / 60000;
@@ -207,7 +209,7 @@ internal sealed class DiscordReporter
                 new EmbedFieldBuilder { Name = "Updated", Value = TimestampTag.FromDateTimeOffset(map.UpdatedAt, TimestampTagStyles.Relative), IsInline = true })
             .WithThumbnailUrl(map.ThumbnailUrl)
             .WithCurrentTimestamp()
-            .WithFooter($"UOTD v0.0.0 | TOTD")
+            .WithFooter($"UOTD {_version.ToString(3)} | TOTD")
             .Build();
     }
 }

@@ -13,11 +13,13 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
 {
     private readonly AppDbContext _db;
     private readonly ILogger<ReportModule> _logger;
+    private readonly Version _version;
 
-    public ReportModule(AppDbContext db, ILogger<ReportModule> logger)
+    public ReportModule(AppDbContext db, ILogger<ReportModule> logger, Version version)
     {
         _db = db;
         _logger = logger;
+        _version = version;
     }
 
     [SlashCommand("subscribe", "Subscribe to UOTD reports in this or other text channel.")]
@@ -85,6 +87,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
             initialMsg = await msgChannel.SendMessageAsync(embed: new EmbedBuilder()
                 .WithDescription("**This channel is now subscribed to UOTD reports.**")
                 .WithCurrentTimestamp()
+                .WithFooter($"UOTD {_version.ToString(3)}")
                 .Build());
         }
         catch (Exception ex)
@@ -356,6 +359,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
             await channel.SendMessageAsync(embed: new EmbedBuilder()
                 .WithDescription("This channel is **no longer subscribed** to UOTD reports.")
                 .WithCurrentTimestamp()
+                .WithFooter($"UOTD {_version.ToString(3)}")
                 .Build());
         }
         catch (Exception ex)
