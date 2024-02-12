@@ -37,10 +37,13 @@ internal sealed class Startup : IHostedService
     {
         _logger.LogInformation("Syncing database...");
 
-        using (var scope = _provider.CreateAsyncScope())
+        await using var scope = _provider.CreateAsyncScope();
+
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>().Database;
+
+        if (db.IsRelational())
         {
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>().Database;
-            if (db.IsRelational()) db.Migrate();
+            await db.MigrateAsync(cancellationToken);
         }
 
         _logger.LogInformation("Starting bot and authorizing with NadeoLiveServices + NadeoClubServices...");
@@ -61,6 +64,8 @@ internal sealed class Startup : IHostedService
                 AuthorizationMethod.DedicatedServer,
                 cancellationToken)
             );
+
+        await scope.ServiceProvider.GetRequiredService<UotdInitializer>().InitializeAsync(cancellationToken);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)

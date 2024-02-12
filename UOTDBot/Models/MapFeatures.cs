@@ -2,11 +2,6 @@
 
 public sealed class MapFeatures
 {
-    public int Id { get; set; }
-    public required Car DefaultCar { get; set; }
-
-    public int MapId { get; set; }
-    public Map Map { get; set; } = default!;
-
-    public List<Car> Gates { get; } = [];
+    public required string DefaultCar { get; set; }
+    public List<string> Gates { get; } = [];
 }

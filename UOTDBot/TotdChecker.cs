@@ -13,6 +13,7 @@ internal sealed class TotdChecker
     private readonly HttpClient _http;
     private readonly CarChecker _carChecker;
     private readonly AppDbContext _db;
+    private readonly TimeProvider _timeProvider;
     private readonly ILogger<TotdChecker> _logger;
 
     public TotdChecker(
@@ -22,6 +23,7 @@ internal sealed class TotdChecker
         HttpClient http,
         CarChecker carChecker,
         AppDbContext db,
+        TimeProvider timeProvider,
         ILogger<TotdChecker> logger)
     {
         _nls = nls;
@@ -30,14 +32,24 @@ internal sealed class TotdChecker
         _http = http;
         _carChecker = carChecker;
         _db = db;
+        _timeProvider = timeProvider;
         _logger = logger;
     }
 
-    public async Task<Models.Map?> CheckAsync(int day, CancellationToken cancellationToken)
+    public async Task<TrackOfTheDayCollection> GetMonthTotdsAsync(int monthsBack, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Checking for TOTD...");
+        return await _nls.GetTrackOfTheDaysAsync(length: 1, offset: monthsBack, cancellationToken: cancellationToken);
+    }
 
-        var totds = await _nls.GetTrackOfTheDaysAsync(length: 1, cancellationToken: cancellationToken);
+    public async Task<Models.Map?> CheckAsync(int day, int monthsBack, CancellationToken cancellationToken)
+    {
+        var totds = await GetMonthTotdsAsync(monthsBack, cancellationToken);
+        return await CheckAsync(totds, day, cancellationToken);
+    }
+
+    public async Task<Models.Map?> CheckAsync(TrackOfTheDayCollection totds, int day, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Checking for TOTD day {Day}...", day);
 
         if (totds.MonthList.Length == 0)
         {
@@ -46,6 +58,7 @@ internal sealed class TotdChecker
         }
 
         var month = totds.MonthList[0];
+        _logger.LogInformation("TOTD month: {Month}", month.Month);
 
         if (month.Days.Length == 0)
         {
@@ -111,17 +124,6 @@ internal sealed class TotdChecker
             _logger.LogWarning(ex, "Failed to get map info from trackmania.io (MapUid: {MapUid}).", dayInfo.MapUid);
         }
 
-        // weird EF core hacks
-        features.DefaultCar = _db.Cars.Find(features.DefaultCar.Id)!;
-
-        foreach (var gate in features.Gates)
-        {
-            gate.DisplayName = _db.Cars.Find(gate.Id)?.DisplayName;
-        }
-        //
-
-        await _db.AddAsync(features, cancellationToken);
-
         mapModel = new Models.Map
         {
             MapId = mapInfo.MapId,
@@ -143,8 +145,12 @@ internal sealed class TotdChecker
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken);
-        _logger.LogInformation("NadeoClubServices: {Cotd}", cotd);
+        // TODO: this check does not consider reruns, needs rework
+        if (_timeProvider.GetUtcNow().Day == dayInfo.MonthDay)
+        {
+            var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken);
+            _logger.LogInformation("NadeoClubServices: {Cotd}", cotd);
+        }
 
         return mapModel;
     }

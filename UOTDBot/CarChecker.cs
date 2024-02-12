@@ -67,7 +67,7 @@ internal sealed class CarChecker
                 }
 
                 _logger.LogInformation("Found a car change gate block");
-                gates.Add($"Car{env}");
+                gates.Add(env == "Stadium" ? "CarSport" : $"Car{env}");
 
                 if (!isUotd && env != "Stadium")
                 {
@@ -85,7 +85,7 @@ internal sealed class CarChecker
                 }
 
                 _logger.LogInformation("Found a car change gate item");
-                gates.Add($"Car{env}");
+                gates.Add(env == "Stadium" ? "CarSport" : $"Car{env}");
 
                 if (!isUotd && env != "Stadium")
                 {
@@ -94,16 +94,8 @@ internal sealed class CarChecker
             }
         }
 
-        var features = new MapFeatures
-        {
-            DefaultCar = new Car { Id = defaultCar }
-        };
-
-        foreach (var gate in gates)
-        {
-            features.Gates.Add(new Car { Id = gate });
-        }
-
+        var features = new MapFeatures { DefaultCar = defaultCar };
+        features.Gates.AddRange(gates);
         return features;
     }
 }

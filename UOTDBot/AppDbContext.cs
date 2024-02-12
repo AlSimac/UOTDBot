@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Hosting;
 using System.Text.Json;
 using TmEssentials;
 using UOTDBot.Models;
@@ -39,5 +40,11 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
             .HasConversion(
                 x => JsonSerializer.Serialize(x, AppJsonContext.Default.DictionaryStringString),
                 x => JsonSerializer.Deserialize(x, AppJsonContext.Default.DictionaryStringString) ?? new());
+
+        modelBuilder.Entity<Map>()
+            .Property(x => x.Features)
+            .HasConversion(
+                x => JsonSerializer.Serialize(x, AppJsonContext.Default.MapFeatures),
+                x => JsonSerializer.Deserialize(x, AppJsonContext.Default.MapFeatures)!);
     }
 }

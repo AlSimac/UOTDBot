@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UOTDBot;
 
@@ -10,12 +11,29 @@ using UOTDBot;
 namespace UOTDBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240212011625_DoMtoN")]
+    partial class DoMtoN
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.1");
+
+            modelBuilder.Entity("CarMapFeatures", b =>
+                {
+                    b.Property<string>("GatesId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MapFeaturesId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("GatesId", "MapFeaturesId");
+
+                    b.HasIndex("MapFeaturesId");
+
+                    b.ToTable("CarMapFeatures");
+                });
 
             modelBuilder.Entity("UOTDBot.Models.Car", b =>
                 {
@@ -71,10 +89,6 @@ namespace UOTDBot.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Features")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("FileSize")
                         .HasColumnType("INTEGER");
 
@@ -105,6 +119,29 @@ namespace UOTDBot.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Maps");
+                });
+
+            modelBuilder.Entity("UOTDBot.Models.MapFeatures", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DefaultCarId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MapId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DefaultCarId");
+
+                    b.HasIndex("MapId")
+                        .IsUnique();
+
+                    b.ToTable("MapFeatures");
                 });
 
             modelBuilder.Entity("UOTDBot.Models.ReportChannel", b =>
@@ -229,6 +266,40 @@ namespace UOTDBot.Migrations
                     b.ToTable("ReportUsers");
                 });
 
+            modelBuilder.Entity("CarMapFeatures", b =>
+                {
+                    b.HasOne("UOTDBot.Models.Car", null)
+                        .WithMany()
+                        .HasForeignKey("GatesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UOTDBot.Models.MapFeatures", null)
+                        .WithMany()
+                        .HasForeignKey("MapFeaturesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("UOTDBot.Models.MapFeatures", b =>
+                {
+                    b.HasOne("UOTDBot.Models.Car", "DefaultCar")
+                        .WithMany("DefaultCarMapFeatures")
+                        .HasForeignKey("DefaultCarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UOTDBot.Models.Map", "Map")
+                        .WithOne("Features")
+                        .HasForeignKey("UOTDBot.Models.MapFeatures", "MapId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DefaultCar");
+
+                    b.Navigation("Map");
+                });
+
             modelBuilder.Entity("UOTDBot.Models.ReportChannel", b =>
                 {
                     b.HasOne("UOTDBot.Models.ReportConfiguration", "Configuration")
@@ -272,6 +343,17 @@ namespace UOTDBot.Migrations
                         .IsRequired();
 
                     b.Navigation("Configuration");
+                });
+
+            modelBuilder.Entity("UOTDBot.Models.Car", b =>
+                {
+                    b.Navigation("DefaultCarMapFeatures");
+                });
+
+            modelBuilder.Entity("UOTDBot.Models.Map", b =>
+                {
+                    b.Navigation("Features")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

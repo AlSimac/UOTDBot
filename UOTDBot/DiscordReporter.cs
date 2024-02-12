@@ -146,7 +146,7 @@ internal sealed class DiscordReporter
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to create thread for report in channel {ChannelId}.", channelId);
+                _logger.LogWarning(ex, "Failed to create thread for report in channel {ChannelId}.", channelId);
             }
         }
 
@@ -209,16 +209,18 @@ internal sealed class DiscordReporter
 
         var sbFeatures = new StringBuilder();
 
-        if (map.Features.DefaultCar.Id != "CarSport")
+        if (map.Features.DefaultCar != "CarSport")
         {
-            if (config.Emotes.TryGetValue(map.Features.DefaultCar.Id, out var emote) && !string.IsNullOrWhiteSpace(emote))
+            var defaultCarModel = _db.Cars.Find(map.Features.DefaultCar);
+
+            if (config.Emotes.TryGetValue(map.Features.DefaultCar, out var emote) && !string.IsNullOrWhiteSpace(emote))
             {
                 sbFeatures.Append(emote);
                 sbFeatures.Append(' ');
             }
 
             sbFeatures.Append("**");
-            sbFeatures.Append(map.Features.DefaultCar.GetName(config));
+            sbFeatures.Append(defaultCarModel?.GetName(config) ?? map.Features.DefaultCar);
             sbFeatures.AppendLine("** (default car)");
         }
 
@@ -228,15 +230,17 @@ internal sealed class DiscordReporter
 
             foreach (var gateCar in map.Features.Gates)
             {
+                var gateCarModel = _db.Cars.Find(gateCar);
+
                 sbFeatures.Append("- ");
 
-                if (config.Emotes.TryGetValue(gateCar.Id, out var emote) && !string.IsNullOrWhiteSpace(emote))
+                if (config.Emotes.TryGetValue(gateCar, out var emote) && !string.IsNullOrWhiteSpace(emote))
                 {
                     sbFeatures.Append(emote);
                     sbFeatures.Append(' ');
                 }
 
-                sbFeatures.AppendLine(gateCar.GetName(config));
+                sbFeatures.AppendLine(gateCarModel?.GetName(config) ?? gateCar);
             }
         }
         else

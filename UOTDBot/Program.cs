@@ -71,6 +71,7 @@ builder.ConfigureServices((context, services) =>
     services.AddScoped<TotdChecker>();
     services.AddScoped<CarChecker>();
     services.AddScoped<DiscordReporter>();
+    services.AddScoped<UotdInitializer>();
 
     // 01/01/2024 Add ManiaAPI.NadeoAPI
     services.AddSingleton<NadeoLiveServices>(

@@ -48,6 +48,8 @@ internal sealed class Scheduler : BackgroundService, IScheduler
 
         using var periodicTimer = new PeriodicTimer(TimeSpan.Parse(_config.GetRequiredValue("Scheduler:Interval")));
 
+        _logger.LogInformation("Scheduler started, ticking.");
+
         while (await periodicTimer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
         {
             await TickAsync(stoppingToken);
@@ -91,7 +93,7 @@ internal sealed class Scheduler : BackgroundService, IScheduler
         {
             map = await scope.ServiceProvider
                 .GetRequiredService<TotdChecker>()
-                .CheckAsync(day, cancellationToken);
+                .CheckAsync(day, monthsBack: 0, cancellationToken);
         }
         catch (Exception ex)
         {
