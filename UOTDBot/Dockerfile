@@ -22,5 +22,6 @@ RUN apk add --no-cache \
     icu-libs
 WORKDIR /app
 COPY --from=build /app .
+RUN mkdir db && chown $APP_UID:$APP_GID db
 USER $APP_UID
 ENTRYPOINT ["./UOTDBot"]
