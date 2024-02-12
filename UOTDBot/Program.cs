@@ -53,7 +53,7 @@ builder.ConfigureServices((context, services) =>
     services.AddSingleton<InteractionService>(provider => new(provider.GetRequiredService<DiscordSocketClient>(), new()
     {
         LogLevel = LogSeverity.Verbose,
-        //LocalizationManager = new JsonLocalizationManager("Localization", "commands")
+        //LocalizationManager = new JsonLocalizationManager("Data", "commands")
     }));
 
     // Add Serilog
