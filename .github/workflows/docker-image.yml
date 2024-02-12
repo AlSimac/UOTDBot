@@ -20,7 +20,9 @@ jobs:
       with:
        submodules: recursive
     - name: Build Docker image
-      run: docker build . -f $BUILD_DIR/Dockerfile -t $REGISTRY_URL/$IMAGE_NAME --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cd $BUILD_DIR
+        docker build . -t $REGISTRY_URL/$IMAGE_NAME --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
     - name: Push Docker image to registry
       run: |
         echo ${{ secrets.REGISTRY_PASSWORD }} | docker login $REGISTRY_URL --username ${{ secrets.REGISTRY_USERNAME }} --password-stdin
