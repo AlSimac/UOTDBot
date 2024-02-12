@@ -1,4 +1,5 @@
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+ARG BUILD_CONFIGURATION=Release
 ARG TARGETARCH=x64
 WORKDIR /src
 
@@ -8,7 +9,7 @@ RUN dotnet restore -a $TARGETARCH
 
 # copy and publish app and libraries
 COPY . .
-RUN dotnet publish -a $TARGETARCH -o /app --self-contained
+RUN dotnet publish -c $BUILD_CONFIGURATION -a $TARGETARCH -o /app --self-contained
 
 
 # final stage/image
