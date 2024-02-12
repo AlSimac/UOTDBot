@@ -269,6 +269,7 @@ internal sealed class DiscordReporter
             .WithThumbnailUrl(map.ThumbnailUrl)
             .WithCurrentTimestamp()
             .WithFooter($"UOTD {_version.ToString(3)} | TOTD")
+            .WithUrl($"https://trackmania.io/#/cotd/{map.CupId}")
             .Build();
     }
 }

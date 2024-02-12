@@ -18,4 +18,5 @@ public sealed class Map
     public required DateOnly Totd { get; set; }
     public required Guid AuthorGuid { get; set; }
     public string? AuthorName { get; set; }
+    public int? CupId { get; set; }
 }

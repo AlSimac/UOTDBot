@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
+using TmEssentials;
 
 namespace UOTDBot.Modules;
 
@@ -27,12 +28,19 @@ public sealed class MapModule : InteractionModuleBase<SocketInteractionContext>
 
         foreach (var map in maps)
         {
-            sb.AppendLine($"**{map.Totd:yyyy-MM-dd}** - {map.Name} by {map.AuthorName}");
+            sb.Append($"**{TimestampTag.FormatFromDateTime(map.Totd.ToDateTime(new(19, 0)), TimestampTagStyles.ShortDate)}** - **[{TextFormatter.Deformat(map.Name)}](https://trackmania.io/#/leaderboard/{map.MapUid})** by [{map.AuthorName}](https://trackmania.io/#/player/{map.AuthorGuid})");
+
+            if (map.CupId.HasValue)
+            {
+                sb.Append($" - 🏆 [#1](https://trackmania.io/#/cotd/{map.CupId})");
+            }
+
+            sb.AppendLine();
         }
 
         await RespondAsync(embed: new EmbedBuilder()
             .WithTitle("UOTD maps")
             .WithDescription(sb.ToString())
-            .Build(), ephemeral: true);
+            .Build(), ephemeral: false);
     }
 }

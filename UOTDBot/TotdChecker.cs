@@ -2,6 +2,7 @@
 using ManiaAPI.NadeoAPI;
 using Microsoft.EntityFrameworkCore;
 using ManiaAPI.TrackmaniaIO;
+using Microsoft.Extensions.Configuration;
 
 namespace UOTDBot;
 
@@ -14,6 +15,7 @@ internal sealed class TotdChecker
     private readonly CarChecker _carChecker;
     private readonly AppDbContext _db;
     private readonly TimeProvider _timeProvider;
+    private readonly IConfiguration _config;
     private readonly ILogger<TotdChecker> _logger;
 
     public TotdChecker(
@@ -24,6 +26,7 @@ internal sealed class TotdChecker
         CarChecker carChecker,
         AppDbContext db,
         TimeProvider timeProvider,
+        IConfiguration config,
         ILogger<TotdChecker> logger)
     {
         _nls = nls;
@@ -33,6 +36,7 @@ internal sealed class TotdChecker
         _carChecker = carChecker;
         _db = db;
         _timeProvider = timeProvider;
+        _config = config;
         _logger = logger;
     }
 
@@ -105,7 +109,9 @@ internal sealed class TotdChecker
 
         var features = _carChecker.CheckMap(mapStream, out var isUotd);
 
-        if (!isUotd)
+        _ = bool.TryParse(_config["AllowAllTOTD"], out var allowAllTotd);
+
+        if (!allowAllTotd && !isUotd)
         {
             _logger.LogInformation("Map is not an UOTD (MapUid: {MapUid}).", dayInfo.MapUid);
             return null;
@@ -124,6 +130,23 @@ internal sealed class TotdChecker
             _logger.LogWarning(ex, "Failed to get map info from trackmania.io (MapUid: {MapUid}).", dayInfo.MapUid);
         }
 
+        var cupId = default(int?);
+
+        // TODO: this check does not consider reruns, needs rework
+        if (_timeProvider.GetUtcNow().Day == dayInfo.MonthDay)
+        {
+            try
+            { 
+                var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken);
+                _logger.LogInformation("NadeoClubServices: {Cotd}", cotd);
+                cupId = cotd.Competition.Id;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get current cup of the day.");
+            }
+        }
+
         mapModel = new Models.Map
         {
             MapId = mapInfo.MapId,
@@ -138,19 +161,13 @@ internal sealed class TotdChecker
             Features = features,
             Totd = new DateOnly(month.Year, month.Month, dayInfo.MonthDay),
             AuthorGuid = mapInfo.Author,
-            AuthorName = authorName
+            AuthorName = authorName,
+            CupId = cupId
         };
 
         await _db.Maps.AddAsync(mapModel, cancellationToken);
 
         await _db.SaveChangesAsync(cancellationToken);
-
-        // TODO: this check does not consider reruns, needs rework
-        if (_timeProvider.GetUtcNow().Day == dayInfo.MonthDay)
-        {
-            var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken);
-            _logger.LogInformation("NadeoClubServices: {Cotd}", cotd);
-        }
 
         return mapModel;
     }
