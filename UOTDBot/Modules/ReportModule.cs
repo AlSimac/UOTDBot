@@ -169,6 +169,16 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
             reportUser.UpdatedAt = _timeProvider.GetUtcNow();
         }
 
+        if (!reportUser.IsEnabled)
+        {
+            await _db.SaveChangesAsync();
+
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("You are no longer subscribed to UOTD reports in DMs.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
         try
         {
             await Context.User.SendMessageAsync("Hello! You have subscribed to UOTD reports in DMs.\nJust letting you know and testing if I'm not blocked or something (do not block me please, just unsubscribe by typing `/report dm` again).");
