@@ -24,6 +24,4 @@ RUN apk add --no-cache \
     tzdata
 WORKDIR /app
 COPY --from=build /app .
-RUN mkdir Data && chown $APP_UID:$APP_GID Data
-USER $APP_UID
 ENTRYPOINT ["./UOTDBot"]
