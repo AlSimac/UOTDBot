@@ -20,7 +20,8 @@ ENV \
     LANG=en_US.UTF-8
 RUN apk add --no-cache \
     icu-data-full \
-    icu-libs
+    icu-libs \
+    tzdata
 WORKDIR /app
 COPY --from=build /app .
 RUN mkdir db && chown $APP_UID:$APP_GID db
