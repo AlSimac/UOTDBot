@@ -35,7 +35,7 @@ internal sealed class UotdInitializer
         var currentDate = firstSnowCarTotdDateTime;
         var previousDate = currentDate;
 
-        while (currentDate < _timeProvider.GetUtcNow())
+        while (currentDate < _timeProvider.GetUtcNow() - TimeSpan.FromDays(1))
         {
             if (currentDate.Month != previousDate.Month)
             {

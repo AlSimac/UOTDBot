@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using UOTDBot.Models;
 using System.Collections.Immutable;
+using TmEssentials;
 
 namespace UOTDBot;
 
@@ -22,12 +23,12 @@ internal sealed class CarChecker
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     private CGameCtnChallenge LoadGBX(Stream stream)
     {
-        _logger.LogInformation("< Start Scheduler.LoadGBX");
+        _logger.LogInformation("Loading Gbx...");
 
         // 31/08/2020 Reading GBX
         var map = GameBox.ParseNode<CGameCtnChallenge>(stream);
 
-        _logger.LogInformation("> End Scheduler.LoadGBX");
+        _logger.LogInformation("Gbx loaded.");
 
         return map;
     }
@@ -41,7 +42,7 @@ internal sealed class CarChecker
     // 01/01/2024 Main method to check the default car and all car change gates
     private MapFeatures CheckMap(CGameCtnChallenge map, out bool isUotd)
     {
-        _logger.LogInformation("Reading cars played in {MapName}...", map.MapName);
+        _logger.LogInformation("Reading cars played in {MapName}...", TextFormatter.Deformat(map.MapName));
 
         var defaultCar = map.PlayerModel?.Id;
         var gates = new HashSet<string>();

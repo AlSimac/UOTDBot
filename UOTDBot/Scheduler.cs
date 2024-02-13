@@ -80,6 +80,8 @@ internal sealed class Scheduler : BackgroundService, IScheduler
 
         _fired = true;
 
+        _logger.LogInformation("Scheduler fired.");
+
         await CheckAndReportTotdAsync(currentCestDateTime.Day, cancellationToken);
     }
 

@@ -99,7 +99,7 @@ internal sealed class TotdChecker
 
         var mapInfo = await _nls.GetMapInfoAsync(dayInfo.MapUid, cancellationToken);
         
-        _logger.LogDebug("Map details: {MapInfo}", mapInfo);
+        _logger.LogInformation("Map details: {MapInfo}", mapInfo);
 
         using var mapResponse = await _http.GetAsync(mapInfo.DownloadUrl, cancellationToken);
 
