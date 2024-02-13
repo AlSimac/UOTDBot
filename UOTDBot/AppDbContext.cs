@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Extensions.Hosting;
 using System.Text.Json;
 using TmEssentials;
 using UOTDBot.Models;

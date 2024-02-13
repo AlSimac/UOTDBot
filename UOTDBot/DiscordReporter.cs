@@ -57,6 +57,7 @@ internal sealed class DiscordReporter
         }
 
         var enabledReportChannels = await _db.ReportChannels
+            .Include(x => x.Configuration)
             .Where(x => x.IsEnabled)
             .ToListAsync(cancellationToken);
 
@@ -75,6 +76,7 @@ internal sealed class DiscordReporter
         var dmCount = 0;
 
         var enabledReportDms = await _db.ReportUsers
+            .Include(x => x.Configuration)
             .Where(x => x.IsEnabled)
             .ToListAsync(cancellationToken);
 
