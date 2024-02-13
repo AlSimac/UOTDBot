@@ -67,7 +67,7 @@ internal sealed class CarChecker
                     continue;
                 }
 
-                _logger.LogInformation("Found a car change gate block");
+                _logger.LogInformation("Found a car change gate block {Block}", block);
                 gates.Add(env == "Stadium" ? "CarSport" : $"Car{env}");
 
                 if (!isUotd && env != "Stadium")
@@ -85,7 +85,7 @@ internal sealed class CarChecker
                     continue;
                 }
 
-                _logger.LogInformation("Found a car change gate item");
+                _logger.LogInformation("Found a car change gate item {Item}", item);
                 gates.Add(env == "Stadium" ? "CarSport" : $"Car{env}");
 
                 if (!isUotd && env != "Stadium")
