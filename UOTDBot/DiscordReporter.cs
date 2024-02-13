@@ -142,7 +142,7 @@ internal sealed class DiscordReporter
         {
             try
             {
-                await _bot.CreateThreadAsync(channelId, message, "lol");
+                await _bot.CreateThreadAsync(channelId, message, $"{TextFormatter.Deformat(map.Name)} by {map.AuthorName}");
             }
             catch (Exception ex)
             {
