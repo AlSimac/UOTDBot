@@ -16,7 +16,7 @@
 		<InvariantGlobalization>false</InvariantGlobalization>
 		<PublishAot>false</PublishAot>
 		<PublishSingleFile>true</PublishSingleFile>
-		<PublishTrimmed>true</PublishTrimmed>
+		<PublishTrimmed>false</PublishTrimmed>
 		<TrimMode>partial</TrimMode>
 		<PublishReadyToRun>true</PublishReadyToRun>
 		<PublishSelfContained>true</PublishSelfContained>
