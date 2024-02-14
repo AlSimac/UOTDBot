@@ -339,6 +339,8 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
                 return;
             }
 
+            await DeferAsync(ephemeral: true);
+
             testMsg = await channel.SendMessageAsync(embed: new EmbedBuilder()
                 .WithDescription("**Test report!** You will get UOTD reported here, woo!")
                 .Build());
@@ -347,7 +349,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         {
             _logger.LogWarning(ex, "Failed to send a test report to channel {ChannelId}.", reportChannel.ChannelId);
 
-            await RespondAsync(embed: new EmbedBuilder()
+            await FollowupAsync(embed: new EmbedBuilder()
                 .WithDescription($"Failed to send a test report to {MentionUtils.MentionChannel(reportChannel.ChannelId)}: `{ex.Message}`").Build(),
                     ephemeral: true);
         }
@@ -355,7 +357,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         // outside of try catch so that exceptions are better logged
         if (testMsg is not null)
         {
-            await RespondAsync(embed: new EmbedBuilder()
+            await FollowupAsync(embed: new EmbedBuilder()
                 .WithDescription($"Test report sent to {MentionUtils.MentionChannel(reportChannel.ChannelId)}.\n**Test report:** {testMsg.GetJumpUrl()}").Build(),
                     ephemeral: true);
         }
