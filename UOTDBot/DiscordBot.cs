@@ -2,14 +2,20 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace UOTDBot;
+
 public interface IDiscordBot : IAsyncDisposable, IDisposable
 {
     Task StartAsync();
     Task StopAsync();
+
+    Task<IUserMessage?> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null);
+    Task<IThreadChannel?> CreateThreadAsync(ulong channelId, IMessage message, string name);
+    Task<IUser?> GetUserAsync(ulong userId);
 }
 
 internal sealed class DiscordBot : IDiscordBot
@@ -20,13 +26,16 @@ internal sealed class DiscordBot : IDiscordBot
     private readonly IConfiguration _config;
     private readonly IHostEnvironment _env;
     private readonly ILogger<DiscordSocketClient> _logger;
+    private readonly Version _version;
 
-    public DiscordBot(IServiceProvider provider,
+    public DiscordBot(
+        IServiceProvider provider,
         DiscordSocketClient client,
         InteractionService interactionService,
         IConfiguration config,
         IHostEnvironment env,
-        ILogger<DiscordSocketClient> logger)
+        ILogger<DiscordSocketClient> logger,
+        Version version)
     {
         _provider = provider;
         _env = env;
@@ -34,16 +43,20 @@ internal sealed class DiscordBot : IDiscordBot
         _interactionService = interactionService;
         _config = config;
         _logger = logger;
+        _version = version;
     }
 
     public async Task StartAsync()
     {
-        var token = _config["Token"] ?? throw new Exception("Token was not provided.");
+        var token = _config["Discord:Token"] ?? throw new Exception("Token was not provided.");
 
         _logger.LogInformation("Starting bot...");
         _logger.LogInformation("Preparing modules...");
 
-        await _interactionService.AddModulesAsync(typeof(Startup).Assembly, _provider);
+        _interactionService.Log += ClientLog;
+
+        using var scope = _provider.CreateScope();
+        await _interactionService.AddModulesAsync(typeof(Startup).Assembly, scope.ServiceProvider);
 
         _logger.LogInformation("Subscribing to events...");
 
@@ -59,7 +72,7 @@ internal sealed class DiscordBot : IDiscordBot
 
         _logger.LogInformation("Loggin in...");
 
-        await _client.LoginAsync(TokenType.Bot, _config["Token"]);
+        await _client.LoginAsync(TokenType.Bot, token);
 
         _logger.LogInformation("Starting...");
 
@@ -68,8 +81,52 @@ internal sealed class DiscordBot : IDiscordBot
         _logger.LogInformation("Started!");
     }
 
+    public async Task StopAsync()
+    {
+        await _client.LogoutAsync();
+        await _client.StopAsync();
+    }
+
+    public async Task<IUserMessage?> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null)
+    {
+        var channel = await _client.GetChannelAsync(channelId);
+
+        if (channel is not IMessageChannel msgChannel)
+        {
+            return null;
+        }
+
+        return await msgChannel.SendMessageAsync(message, embed: embed);
+    }
+
+    public async Task<IThreadChannel?> CreateThreadAsync(ulong channelId, IMessage message, string name)
+    {
+        var channel = await _client.GetChannelAsync(channelId);
+
+        if (channel is not ITextChannel textChannel)
+        {
+            return null;
+        }
+
+        return await textChannel.CreateThreadAsync(name, message: message);
+    }
+
+    public async Task<IUser?> GetUserAsync(ulong userId)
+    {
+        return await _client.GetUserAsync(userId);
+    }
+
     private async Task ClientReady()
     {
+        var versionStr = _version.ToString(3);
+
+        if (_version.Major == 0)
+        {
+            versionStr += " (beta)";
+        }
+
+        await _client.SetCustomStatusAsync(versionStr);
+
         // Does not need to be called every Ready event
         await RegisterCommandsAsync(deleteMissing: true);
     }
@@ -86,15 +143,9 @@ internal sealed class DiscordBot : IDiscordBot
             LogSeverity.Debug => LogLevel.Trace,
             _ => throw new NotImplementedException()
         },
-            msg.Exception, "{message}", msg.Message);
+            msg.Exception, "{message}", msg.Message ?? msg.Exception?.Message);
 
         return Task.CompletedTask;
-    }
-
-    public async Task StopAsync()
-    {
-        await _client.LogoutAsync();
-        await _client.StopAsync();
     }
 
     private async Task RegisterCommandsAsync(bool deleteMissing = true)
@@ -103,7 +154,7 @@ internal sealed class DiscordBot : IDiscordBot
 
         if (_env.IsDevelopment())
         {
-            await _interactionService.RegisterCommandsToGuildAsync(ulong.Parse(_config["TestGuildId"] ?? throw new Exception("TestGuildId was not provided.")), deleteMissing);
+            await _interactionService.RegisterCommandsToGuildAsync(ulong.Parse(_config["Discord:TestGuildId"] ?? throw new Exception("Discord:TestGuildId was not provided.")), deleteMissing);
         }
         else
         {

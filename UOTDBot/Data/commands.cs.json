@@ -1,0 +1,46 @@
+{
+  "report": {
+    "name": "report",
+    "description": "Správa UOTD oznámení.",
+    "subscribe": {
+      "name": "subscribe",
+      "description": "Oznamovat UOTD v tomto textovém kanále nebo jiném.",
+      "other": {
+        "name": "other",
+        "description": "Jiný kanál než tento pro oznámení UOTD."
+      }
+    },
+    "unsubscribe": {
+      "name": "unsubscribe",
+      "description": "Neoznamovat UOTD na tomto serveru."
+    },
+    "dm": {
+      "name": "dm",
+      "description": "Oznamovat UOTD v DMs."
+    },
+    "autothread": {
+      "name": "autothread",
+      "description": "Povolit nebo zakázat vytváření vláken na UOTD oznámeních."
+    }
+  },
+  "rules": {
+    "name": "rules",
+    "description": "Jaké jsou požadavky TOTD na oznámení UOTD?"
+  },
+  "help": {
+    "name": "help",
+    "description": "Zobrazit nápovědu."
+  },
+  "car": {
+    "name": "car",
+    "description": "Funkce související s auty.",
+    "emote": {
+      "name": "emote",
+      "description": "Zobrazit nebo nastavit emote auta pro oznámení."
+    },
+    "format": {
+      "name": "format",
+      "description": "Zobrazit nebo nastavit formát názvu auta pro oznámení."
+    }
+  }
+}
