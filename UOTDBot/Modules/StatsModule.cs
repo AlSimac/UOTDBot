@@ -23,7 +23,7 @@ public sealed class StatsModule : InteractionModuleBase<SocketInteractionContext
 
         await RespondAsync(embed: new EmbedBuilder()
             .WithTitle("Stats")
-            .WithDescription($"Reports in **{totalUsers}** DMs and **{totalGuilds}** servers.")
+            .WithDescription($"Reports in **{totalGuilds}** servers and **{totalUsers}** DMs.")
             .WithFooter($"UOTD {_version.ToString(3)}")
             .Build(),
                 ephemeral: true);
