@@ -20,19 +20,24 @@ var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices((context, services) =>
 {
+    services.AddHttpClient<TotdChecker>()
+        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
+        ));
+
     services.AddHttpClient<NadeoLiveServices>()
         .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
         ));
 
     services.AddHttpClient<NadeoClubServices>()
         .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
         ));
 
     services.AddHttpClient<TrackmaniaIO>()
         .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
         ));
 
     services.AddSingleton(TimeProvider.System);

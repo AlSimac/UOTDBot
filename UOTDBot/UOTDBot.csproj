@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>0.1.2</Version>
+		<Version>1.0.0</Version>
 	</PropertyGroup>
 	
 	<PropertyGroup>
@@ -25,11 +25,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="ByteSize" Version="2.1.2" />
-		<PackageReference Include="Discord.Net" Version="3.13.1" />
-		<PackageReference Include="GBX.NET" Version="1.2.5" />
+		<PackageReference Include="Discord.Net" Version="3.14.1" />
+		<PackageReference Include="GBX.NET" Version="1.2.6" />
 		<PackageReference Include="GBX.NET.LZO" Version="1.0.4" />
-		<PackageReference Include="ManiaAPI.NadeoAPI" Version="2.0.0-alpha6" />
-		<PackageReference Include="ManiaAPI.TrackmaniaIO" Version="2.0.0-alpha7" />
+		<PackageReference Include="ManiaAPI.NadeoAPI" Version="2.0.0-alpha8" />
+		<PackageReference Include="ManiaAPI.TrackmaniaIO" Version="2.0.0-alpha9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.1">
 		  <PrivateAssets>all</PrivateAssets>

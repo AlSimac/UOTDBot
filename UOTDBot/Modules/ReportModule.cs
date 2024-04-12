@@ -344,6 +344,11 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
             testMsg = await channel.SendMessageAsync(embed: new EmbedBuilder()
                 .WithDescription("**Test report!** You will get UOTD reported here, woo!")
                 .Build());
+
+            if (reportChannel.AutoThread && testMsg is not null)
+            {
+                await channel.CreateThreadAsync("Test report thread", channel is INewsChannel ? ThreadType.NewsThread : ThreadType.PublicThread);
+            }
         }
         catch (Exception ex)
         {

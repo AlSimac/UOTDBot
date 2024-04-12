@@ -108,7 +108,8 @@ internal sealed class DiscordBot : IDiscordBot
             return null;
         }
 
-        return await textChannel.CreateThreadAsync(name, message: message);
+        return await textChannel.CreateThreadAsync(name, message: message,
+            type: channel is INewsChannel ? ThreadType.NewsThread : ThreadType.PublicThread);
     }
 
     public async Task<IUser?> GetUserAsync(ulong userId)
