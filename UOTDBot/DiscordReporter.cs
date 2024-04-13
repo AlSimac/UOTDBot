@@ -136,9 +136,13 @@ internal sealed class DiscordReporter
 
         try
         {
-            var embed = CreateEmbed(map, config);
+            var embed = CreateEmbed(map, config, channelId);
 
-            message = await _bot.SendMessageAsync(channelId, embed: embed);
+            var roles = config.PingRoles.Count > 0 ? string.Join(' ', config.PingRoles
+                .Select(x => _bot.GetRole(channelId, x)?.Mention)
+                .OfType<string>()) : null;
+
+            message = await _bot.SendMessageAsync(channelId, message: roles, embed);
         }
         catch (Exception ex)
         {
@@ -185,7 +189,7 @@ internal sealed class DiscordReporter
 
         try
         {
-            var embed = CreateEmbed(map, reportUser.Configuration);
+            var embed = CreateEmbed(map, reportUser.Configuration, channelId: null);
 
             message = await user.SendMessageAsync(embed: embed);
         }
@@ -212,7 +216,7 @@ internal sealed class DiscordReporter
         return reportMessage;
     }
 
-    private Embed CreateEmbed(Map map, ReportConfiguration config)
+    private Embed CreateEmbed(Map map, ReportConfiguration config, ulong? channelId)
     {
         var sbFeatures = new StringBuilder();
 

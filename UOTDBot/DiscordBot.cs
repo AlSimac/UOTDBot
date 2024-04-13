@@ -16,6 +16,7 @@ public interface IDiscordBot : IAsyncDisposable, IDisposable
     Task<IUserMessage?> SendMessageAsync(ulong channelId, string? message = null, Embed? embed = null);
     Task<IThreadChannel?> CreateThreadAsync(ulong channelId, IMessage message, string name);
     Task<IUser?> GetUserAsync(ulong userId);
+    IRole? GetRole(ulong channelId, ulong roleId);
 }
 
 internal sealed class DiscordBot : IDiscordBot
@@ -115,6 +116,18 @@ internal sealed class DiscordBot : IDiscordBot
     public async Task<IUser?> GetUserAsync(ulong userId)
     {
         return await _client.GetUserAsync(userId);
+    }
+
+    public IRole? GetRole(ulong channelId, ulong roleId)
+    {
+        var channel = _client.GetChannel(channelId);
+
+        if (channel is IGuildChannel guildChannel)
+        {
+            return guildChannel.Guild.GetRole(roleId);
+        }
+
+        return null;
     }
 
     private async Task ClientReady()
