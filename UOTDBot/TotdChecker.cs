@@ -120,8 +120,14 @@ internal sealed class TotdChecker
             if (carDistrib is not null)
             {
                 _ = carDistrib.TryGetValue("CarSport", out var carSportLength);
-                var nonCarSportLength = carDistrib.Where(x => x.Key != "CarSport")
-                    .Sum(x => x.Value);
+                var nonCarSportLength = carDistrib.Where(x => x.Key != "CarSport").Sum(x => x.Value);
+                
+                if (nonCarSportLength == 0)
+                {
+                    _logger.LogInformation("Map has only CarSport, definitely not an UOTD (MapUid: {MapUid}).", mapUid);
+                    isUotd = false;
+                }
+                
                 var nonStadDistrib = features.NonStadiumDistribution = nonCarSportLength / (float)(carSportLength + nonCarSportLength);
             
                 if (nonStadDistrib > 0.01f)

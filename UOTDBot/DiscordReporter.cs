@@ -202,13 +202,6 @@ internal sealed class DiscordReporter
 
     private Embed CreateEmbed(Map map, ReportConfiguration config)
     {
-        var length = map.AuthorTime.TotalMilliseconds + 1000;
-        var minutes = length / 60000;
-        var seconds = length % 60000 / 1000;
-
-        var lengthString = $"{seconds} sec";
-        if (minutes > 0) lengthString = $"{minutes} min, {lengthString}";
-
         var sbFeatures = new StringBuilder();
 
         if (map.Features.DefaultCar != "CarSport")
@@ -234,15 +227,33 @@ internal sealed class DiscordReporter
             {
                 var gateCarModel = _db.Cars.Find(gateCar);
 
-                sbFeatures.Append("- ");
-
                 if (config.Emotes.TryGetValue(gateCar, out var emote) && !string.IsNullOrWhiteSpace(emote))
                 {
                     sbFeatures.Append(emote);
                     sbFeatures.Append(' ');
                 }
+                else
+                {
+                    sbFeatures.Append("- ");
+                }
 
-                sbFeatures.AppendLine(gateCarModel?.GetName(config) ?? gateCar);
+                sbFeatures.Append(gateCarModel?.GetName(config) ?? gateCar);
+
+                if (map.Features.CarDistribution?.TryGetValue(gateCar, out var carTimeMilliseconds) == true)
+                {
+                    sbFeatures.Append(" (");
+                    sbFeatures.Append(GetLengthString(carTimeMilliseconds));
+                    sbFeatures.Append(')');
+                }
+
+                sbFeatures.AppendLine();
+
+                if (map.Features.NonStadiumDistribution.HasValue)
+                {
+                    var carSportModel = _db.Cars.Find("CarSport");
+                    var carSport = carSportModel?.GetName(config) ?? "CarSport";
+                    sbFeatures.AppendLine($"**{map.Features.NonStadiumDistribution:P2} {carSport} map!**");
+                }
             }
         }
         else
@@ -253,7 +264,7 @@ internal sealed class DiscordReporter
         var fields = new List<EmbedFieldBuilder>
         {
             new() { Name = "Map", Value = $"[{TextFormatter.Deformat(map.Name)}](https://trackmania.io/#/leaderboard/{map.MapUid})", IsInline = true },
-            new() { Name = "Length", Value = $"~{lengthString}", IsInline = true },
+            new() { Name = "Length", Value = $"~{GetLengthString(map.AuthorTime.TotalMilliseconds + 1000)}", IsInline = true },
             new() { Name = "Features", Value = sbFeatures.ToString(), IsInline = true }
         };
 
@@ -273,5 +284,15 @@ internal sealed class DiscordReporter
             .WithFooter($"UOTD {_version.ToString(3)} | TOTD")
             .WithUrl($"https://trackmania.io/#/cotd/{map.CupId}")
             .Build();
+    }
+
+    private static string GetLengthString(int milliseconds)
+    {
+        var minutes = milliseconds / 60000;
+        var seconds = milliseconds % 60000 / 1000;
+
+        var lengthString = $"{seconds} sec";
+        if (minutes > 0) lengthString = $"{minutes} min, {lengthString}";
+        return lengthString;
     }
 }
