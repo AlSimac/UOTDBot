@@ -8,6 +8,9 @@ env:
   BUILD_DIR: UOTDBot
   IMAGE_NAME: uotd-bot
 
+permissions:
+  packages: write
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
