@@ -264,7 +264,7 @@ internal sealed class DiscordReporter
                 {
                     var carSportModel = _db.Cars.Find("CarSport");
                     var carSport = carSportModel?.GetName(config) ?? "CarSport";
-                    sbFeatures.AppendLine($"**{map.Features.NonStadiumDistribution:P2} {carSport} map!**");
+                    sbFeatures.AppendLine($"**{1 - map.Features.NonStadiumDistribution:P2} {carSport} map!**");
                 }
                 else
                 {

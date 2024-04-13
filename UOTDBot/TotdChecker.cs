@@ -130,7 +130,7 @@ internal sealed class TotdChecker
                 
                 var nonStadDistrib = features.NonStadiumDistribution = nonCarSportLength / (float)(carSportLength + nonCarSportLength);
             
-                if (nonStadDistrib > 0.01f)
+                if (nonStadDistrib < 0.01f)
                 {
                     _logger.LogInformation("Map has more than 99% of CarSport, definitely not an UOTD (MapUid: {MapUid}).", mapUid);
                     isUotd = false;
