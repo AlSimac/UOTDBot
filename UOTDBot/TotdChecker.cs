@@ -114,11 +114,21 @@ internal sealed class TotdChecker
         {
             _logger.LogInformation("UOTD elements found. Checking the WR if it has a UOTD car...");
 
-            var nonStadiumPercentage = await _carChecker.DownloadAndCheckWrGhostAsync(mapUid, features.DefaultCar, backupGhost: raceValidateGhost, cancellationToken);
+            var carDistrib = features.CarDistribution = await _carChecker.DownloadAndCheckWrGhostAsync(
+                mapUid, features.DefaultCar, backupGhost: raceValidateGhost, cancellationToken);
 
-            if (nonStadiumPercentage.HasValue)
+            if (carDistrib is not null)
             {
-                isUotd = nonStadiumPercentage.Value > 0.5f; // 50% can change with results of poll
+                _ = carDistrib.TryGetValue("CarSport", out var carSportLength);
+                var nonCarSportLength = carDistrib.Where(x => x.Key != "CarSport")
+                    .Sum(x => x.Value);
+                var nonStadDistrib = features.NonStadiumDistribution = nonCarSportLength / (float)(carSportLength + nonCarSportLength);
+            
+                if (nonStadDistrib > 0.01f)
+                {
+                    _logger.LogInformation("Map has more than 99% of CarSport, definitely not an UOTD (MapUid: {MapUid}).", mapUid);
+                    isUotd = false;
+                }
             }
         }
 
