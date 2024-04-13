@@ -261,17 +261,17 @@ internal sealed class DiscordReporter
                 }
 
                 sbFeatures.AppendLine();
+            }
 
-                if (map.Features.NonStadiumDistribution.HasValue)
-                {
-                    var carSportModel = _db.Cars.Find("CarSport");
-                    var carSport = carSportModel?.GetName(config) ?? "CarSport";
-                    sbFeatures.AppendLine($"**{1 - map.Features.NonStadiumDistribution:P2} {carSport} map!**");
-                }
-                else
-                {
-                    sbFeatures.AppendLine("*Unknown car distribution.*");
-                }
+            if (map.Features.NonStadiumDistribution.HasValue)
+            {
+                var carSportModel = _db.Cars.Find("CarSport");
+                var carSport = carSportModel?.GetName(config) ?? "CarSport";
+                sbFeatures.AppendLine($"**{1 - map.Features.NonStadiumDistribution:P2} {carSport} map!**");
+            }
+            else
+            {
+                sbFeatures.AppendLine("*Unknown car distribution.*");
             }
         }
         else
