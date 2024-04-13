@@ -126,6 +126,12 @@ internal sealed class DiscordReporter
     {
         _logger.LogInformation("Sending UOTD report to channel {ChannelId}...", channelId);
 
+        if (map.Features.NonStadiumDistribution < config.Threshold)
+        {
+            _logger.LogInformation("Skipping report to channel {ChannelId} due to server's threshold not meeting map's car distribution.", channelId);
+            return null;
+        }
+
         IUserMessage? message;
 
         try
@@ -160,6 +166,12 @@ internal sealed class DiscordReporter
         var userId = reportUser.UserId;
 
         _logger.LogInformation("Sending UOTD report to DM {UserId}...", userId);
+
+        if (map.Features.NonStadiumDistribution < reportUser.Configuration.Threshold)
+        {
+            _logger.LogInformation("Skipping report DM for user {UserId} due to user's threshold not meeting map's car distribution.", userId);
+            return null;
+        }
 
         var user = await _bot.GetUserAsync(userId);
         
@@ -241,7 +253,7 @@ internal sealed class DiscordReporter
 
                 if (map.Features.CarDistribution?.TryGetValue(gateCar, out var carTimeMilliseconds) == true)
                 {
-                    sbFeatures.Append(" (");
+                    sbFeatures.Append(" (~");
                     sbFeatures.Append(GetLengthString(carTimeMilliseconds));
                     sbFeatures.Append(')');
                 }
@@ -253,6 +265,10 @@ internal sealed class DiscordReporter
                     var carSportModel = _db.Cars.Find("CarSport");
                     var carSport = carSportModel?.GetName(config) ?? "CarSport";
                     sbFeatures.AppendLine($"**{map.Features.NonStadiumDistribution:P2} {carSport} map!**");
+                }
+                else
+                {
+                    sbFeatures.AppendLine("*Unknown car distribution.*");
                 }
             }
         }

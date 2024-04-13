@@ -486,7 +486,99 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         await _db.SaveChangesAsync();
 
         await RespondAsync(embed: new EmbedBuilder()
-            .WithDescription($"Emote for `{type}` set to {emoteStr}").Build(),
+            .WithDescription($"Emote for `{type}` has been set to {emoteStr}").Build(),
+                ephemeral: true);
+    }
+
+    [SlashCommand("threshold", "Get or set the threshold of how much of Stadium car time should be accepted.")]
+    public async Task Threshold(
+        [Summary(description: "Format: 0.5/0.02/1 (50% Stadium car, 20% Stadium car, ...)"), MinValue(0.01), MaxValue(1)] float? threshold = null,
+        bool reset = false)
+    {
+        var config = default(ReportConfiguration);
+
+        if (Context.User is IGuildUser guildUser)
+        {
+            if (!guildUser.GuildPermissions.ManageChannels)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You need the `Manage Channels` permission to use this command.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            var reportChannel = await _db.ReportChannels
+                .Include(x => x.Configuration)
+                .FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
+
+            if (reportChannel is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("This server is not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            config = reportChannel.Configuration;
+        }
+        else if (Context.Channel is IDMChannel)
+        {
+            var reportUser = await _db.ReportUsers
+                .Include(x => x.Configuration)
+                .FirstOrDefaultAsync(c => c.UserId == Context.User.Id);
+
+            if (reportUser is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You are not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            config = reportUser.Configuration;
+        }
+
+        if (config is null)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("Not subscribed to UOTD reports.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        if (reset)
+        {
+            var hasBeenReset = false;
+
+            if (config.Threshold != 0.5f)
+            {
+                config.Threshold = 0.5f;
+                hasBeenReset = true;
+                await _db.SaveChangesAsync();
+            }
+
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription(hasBeenReset
+                ? $"Threshold for reports has been reset to `{0.5f:P2}`."
+                : $"Threshold for reports is already at default `{0.5f:P2}`.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        if (threshold is null)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription($"Threshold for reports is `{config.Threshold:P2}`.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        config.Threshold = threshold.Value;
+
+        await _db.SaveChangesAsync();
+
+        await RespondAsync(embed: new EmbedBuilder()
+            .WithDescription($"Threshold for reports has been set to `{config.Threshold:P2}`").Build(),
                 ephemeral: true);
     }
 
