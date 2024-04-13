@@ -88,9 +88,11 @@ internal sealed class TotdChecker
         _logger.LogInformation("Found TOTD day {MonthDay} (MapUid: {MapUid})", dayInfo.MonthDay, mapUid);
         _logger.LogDebug("TOTD details: {DayInfo}", day);
 
+        _ = bool.TryParse(_config["ReportIfAlreadyInDB"], out var reportIfAlreadyInDb);
+
         var mapModel = await _db.Maps.FirstOrDefaultAsync(x => x.MapUid == mapUid, cancellationToken);
 
-        if (mapModel is not null)
+        if (mapModel is not null && !reportIfAlreadyInDb)
         {
             _logger.LogInformation("Map already exists in database (MapUid: {MapUid}). Nothing to report.", mapUid);
             return null;
@@ -119,8 +121,10 @@ internal sealed class TotdChecker
 
             if (carDistrib is not null)
             {
-                _ = carDistrib.TryGetValue("CarSport", out var carSportLength);
-                var nonCarSportLength = carDistrib.Where(x => x.Key != "CarSport").Sum(x => x.Value);
+                _ = carDistrib.TryGetValue("CarSport", out var carSportDistribution);
+
+                var carSportLength = carSportDistribution?.TimeMilliseconds ?? 0;
+                var nonCarSportLength = carDistrib.Where(x => x.Key != "CarSport").Sum(x => x.Value.TimeMilliseconds);
                 
                 if (nonCarSportLength == 0)
                 {

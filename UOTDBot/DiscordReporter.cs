@@ -251,10 +251,12 @@ internal sealed class DiscordReporter
 
                 sbFeatures.Append(gateCarModel?.GetName(config) ?? gateCar);
 
-                if (map.Features.CarDistribution?.TryGetValue(gateCar, out var carTimeMilliseconds) == true)
+                if (map.Features.CarDistribution?.TryGetValue(gateCar, out var carDistribution) == true)
                 {
                     sbFeatures.Append(" (~");
-                    sbFeatures.Append(GetLengthString(carTimeMilliseconds));
+                    sbFeatures.Append(GetLengthString(carDistribution.TimeMilliseconds));
+                    sbFeatures.Append(" | ");
+                    sbFeatures.Append(carDistribution.Percentage.ToString("P2"));
                     sbFeatures.Append(')');
                 }
 

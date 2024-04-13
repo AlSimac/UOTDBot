@@ -105,7 +105,7 @@ internal sealed class CarChecker
         return features;
     }
 
-    public async Task<Dictionary<string, int>?> DownloadAndCheckWrGhostAsync(string mapUid, string defaultCar, CGameCtnGhost? backupGhost, CancellationToken cancellationToken)
+    public async Task<Dictionary<string, CarDistribution>?> DownloadAndCheckWrGhostAsync(string mapUid, string defaultCar, CGameCtnGhost? backupGhost, CancellationToken cancellationToken)
     {
         var recordList = await _tmio.GetLeaderboardAsync(mapUid, length: 1, cancellationToken: cancellationToken);
 
@@ -202,13 +202,20 @@ internal sealed class CarChecker
             return null;
         }
 
-        carLengths.TryAdd(currentCar, ghost.RaceTime ?? ghost.RecordData.End - tempTimestamp);
+        var end = ghost.RaceTime ?? ghost.RecordData.End;
 
-        var dict = new Dictionary<string, int>();
+        carLengths.TryAdd(currentCar, end - tempTimestamp);
+
+        var dict = new Dictionary<string, CarDistribution>();
 
         foreach (var (car, time) in carLengths)
         {
-            dict[car] = time.TotalMilliseconds;
+            dict[car] = new CarDistribution
+            {
+                TimeMilliseconds = time.TotalMilliseconds,
+                Percentage = time.TotalMilliseconds / (float)end.TotalMilliseconds
+            };
+
             _logger.LogInformation("Car {Car} was played for {Time}.", car, time);
         }
 
