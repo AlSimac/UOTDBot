@@ -180,6 +180,11 @@ internal sealed class TotdChecker
             }
         }
 
+        if (mapModel is not null && reportIfAlreadyInDb)
+        {
+            return mapModel;
+        }
+
         mapModel = new Models.Map
         {
             MapId = mapInfo.MapId,
