@@ -492,7 +492,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
 
     [SlashCommand("threshold", "Get or set the threshold of how much of Stadium car time should be accepted.")]
     public async Task Threshold(
-        [Summary(description: "Format: 0.5/0.02/1 (50% Stadium car, 2% Stadium car, ...)"), MinValue(0.01), MaxValue(1)] float? value = null,
+        [Summary(description: "Format: 0.5/0.02/1 (50% Stadium car, 2% Stadium car, ...)"), MinValue(0.01), MaxValue(1)] double? value = null,
         bool reset = false)
     {
         var config = default(ReportConfiguration);
@@ -573,7 +573,7 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
             return;
         }
 
-        config.Threshold = value.Value;
+        config.Threshold = (float)value.Value;
 
         await _db.SaveChangesAsync();
 
@@ -660,6 +660,22 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
 
         if (role is null)
         {
+            if (remove)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You need to specify a role to remove.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            if (config.PingRoles.Count == 0)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("Nobody is being pinged when report happens.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
             var sb = new StringBuilder();
             sb.AppendLine("These roles are being pinged:");
 
