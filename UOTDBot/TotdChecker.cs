@@ -125,19 +125,21 @@ internal sealed class TotdChecker
 
                 var carSportLength = carSportDistribution?.TimeMilliseconds ?? 0;
                 var nonCarSportLength = carDistrib.Where(x => x.Key != "CarSport").Sum(x => x.Value.TimeMilliseconds);
-                
-                if (nonCarSportLength == 0)
+
+                if (nonCarSportLength == 0 || carSportLength + nonCarSportLength == 0)
                 {
                     _logger.LogInformation("Map has only CarSport, definitely not an UOTD (MapUid: {MapUid}).", mapUid);
                     isUotd = false;
                 }
-                
-                var nonStadDistrib = features.NonStadiumDistribution = nonCarSportLength / (float)(carSportLength + nonCarSportLength);
-            
-                if (nonStadDistrib < 0.01f)
+                else
                 {
-                    _logger.LogInformation("Map has more than 99% of CarSport, definitely not an UOTD (MapUid: {MapUid}).", mapUid);
-                    isUotd = false;
+                    var nonStadDistrib = features.NonStadiumDistribution = nonCarSportLength / (float)(carSportLength + nonCarSportLength);
+
+                    if (nonStadDistrib < 0.01f)
+                    {
+                        _logger.LogInformation("Map has more than 99% of CarSport, definitely not an UOTD (MapUid: {MapUid}).", mapUid);
+                        isUotd = false;
+                    }
                 }
             }
         }
