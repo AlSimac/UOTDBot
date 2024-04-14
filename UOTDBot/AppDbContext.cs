@@ -40,6 +40,12 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
                 x => JsonSerializer.Serialize(x, AppJsonContext.Default.DictionaryStringString),
                 x => string.IsNullOrEmpty(x) ? new() : JsonSerializer.Deserialize(x, AppJsonContext.Default.DictionaryStringString) ?? new());
 
+        modelBuilder.Entity<ReportConfiguration>()
+            .Property(x => x.PingRoles)
+            .HasConversion(
+                x => JsonSerializer.Serialize(x, AppJsonContext.Default.ListUInt64),
+                x => string.IsNullOrEmpty(x) ? new() : JsonSerializer.Deserialize(x, AppJsonContext.Default.ListUInt64) ?? new());
+
         modelBuilder.Entity<Map>()
             .Property(x => x.Features)
             .HasConversion(
