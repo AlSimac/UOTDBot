@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using UOTDBot;
-using GBX.NET.LZO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -14,7 +13,7 @@ using Polly;
 using Polly.Contrib.WaitAndRetry;
 using ManiaAPI.TrackmaniaIO;
 
-GBX.NET.Lzo.SetLzo(typeof(MiniLZO));
+GBX.NET.Gbx.LZO = new GBX.NET.LZO.MiniLZO();
 
 var builder = Host.CreateDefaultBuilder(args);
 

@@ -25,12 +25,12 @@ internal sealed class CarChecker
 
     // 02/09/2020 Load the GBX
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    private T LoadGBX<T>(Stream stream) where T : CMwNod
+    private T LoadGBX<T>(Stream stream) where T : CMwNod, new()
     {
         _logger.LogInformation("Loading Gbx...");
 
         // 31/08/2020 Reading GBX
-        var map = GameBox.ParseNode<T>(stream);
+        var map = Gbx.ParseNode<T>(stream);
 
         _logger.LogInformation("Gbx loaded.");
 
