@@ -171,8 +171,8 @@ internal sealed class TotdChecker
         if (_timeProvider.GetUtcNow().Day == dayInfo.MonthDay)
         {
             try
-            { 
-                var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken);
+            {
+                var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken) ?? throw new Exception("No COTD at the moment while it should be.");
                 _logger.LogInformation("NadeoClubServices: {Cotd}", cotd);
                 cupId = cotd.Competition.Id;
             }
