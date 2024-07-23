@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -143,6 +144,59 @@ internal sealed class DiscordBot : IDiscordBot
 
         // Does not need to be called every Ready event
         await RegisterCommandsAsync(deleteMissing: true);
+
+        await RemoveInvalidReportsAsync();
+    }
+
+    private async Task RemoveInvalidReportsAsync()
+    {
+        using var scope = _provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var invalidReportMessages = await db.ReportMessages
+            .Include(x => x.Channel)
+            .Include(x => x.Map)
+            .Where(x => !x.IsDeleted && x.Map.MapId == Guid.Parse("55ed0a23-3796-4625-8384-8ef6297fc015"))
+            .ToListAsync();
+
+        foreach (var msg in invalidReportMessages)
+        {
+            try
+            {
+                if (msg.Channel is not null)
+                {
+                    var c = await _client.GetChannelAsync(msg.Channel.ChannelId) as ITextChannel;
+
+                    if (c is not null)
+                    {
+                        await c.DeleteMessageAsync(msg.MessageId);
+                    }
+                }
+
+                if (msg.DM is not null)
+                {
+                    var u = await _client.GetUserAsync(msg.DM.UserId);
+
+                    if (u is not null)
+                    {
+                        var c = await u.CreateDMChannelAsync();
+
+                        if (c is not null)
+                        {
+                            await c.DeleteMessageAsync(msg.MessageId);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                
+            }
+
+            msg.IsDeleted = true;
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private Task ClientLog(LogMessage msg)

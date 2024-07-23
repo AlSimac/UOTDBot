@@ -14,6 +14,7 @@ using Polly.Contrib.WaitAndRetry;
 using ManiaAPI.TrackmaniaIO;
 
 GBX.NET.Gbx.LZO = new GBX.NET.LZO.MiniLZO();
+GBX.NET.Gbx.ZLib = new GBX.NET.ZLib.ZLib();
 
 var builder = Host.CreateDefaultBuilder(args);
 
