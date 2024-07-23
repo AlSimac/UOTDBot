@@ -161,23 +161,23 @@ internal sealed class DiscordBot : IDiscordBot
 
         foreach (var msg in invalidReportMessages)
         {
-            if (msg.Channel is not null)
+            try
             {
-                var c = await _client.GetChannelAsync(msg.Channel.ChannelId) as ITextChannel;
-
-                if (c is not null)
+                if (msg.Channel is not null)
                 {
-                    await c.DeleteMessageAsync(msg.MessageId);
+                    var c = await _client.GetChannelAsync(msg.Channel.ChannelId) as ITextChannel;
+
+                    if (c is not null)
+                    {
+                        await c.DeleteMessageAsync(msg.MessageId);
+                    }
                 }
-            }
 
-            if (msg.DM is not null)
-            {
-                var u = await _client.GetUserAsync(msg.DM.UserId);
-
-                if (u is not null)
+                if (msg.DM is not null)
                 {
-                    try
+                    var u = await _client.GetUserAsync(msg.DM.UserId);
+
+                    if (u is not null)
                     {
                         var c = await u.CreateDMChannelAsync();
 
@@ -186,11 +186,11 @@ internal sealed class DiscordBot : IDiscordBot
                             await c.DeleteMessageAsync(msg.MessageId);
                         }
                     }
-                    catch
-                    {
-
-                    }
                 }
+            }
+            catch
+            {
+                
             }
 
             msg.IsDeleted = true;
