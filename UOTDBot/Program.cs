@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using UOTDBot;
-using GBX.NET.LZO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -14,25 +13,31 @@ using Polly;
 using Polly.Contrib.WaitAndRetry;
 using ManiaAPI.TrackmaniaIO;
 
-GBX.NET.Lzo.SetLzo(typeof(MiniLZO));
+GBX.NET.Gbx.LZO = new GBX.NET.LZO.MiniLZO();
+GBX.NET.Gbx.ZLib = new GBX.NET.ZLib.ZLib();
 
 var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices((context, services) =>
 {
+    services.AddHttpClient<TotdChecker>()
+        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
+        ));
+
     services.AddHttpClient<NadeoLiveServices>()
         .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
         ));
 
     services.AddHttpClient<NadeoClubServices>()
         .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
         ));
 
     services.AddHttpClient<TrackmaniaIO>()
         .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 3)
+            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
         ));
 
     services.AddSingleton(TimeProvider.System);

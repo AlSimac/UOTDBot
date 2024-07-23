@@ -344,6 +344,11 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
             testMsg = await channel.SendMessageAsync(embed: new EmbedBuilder()
                 .WithDescription("**Test report!** You will get UOTD reported here, woo!")
                 .Build());
+
+            if (reportChannel.AutoThread && testMsg is not null)
+            {
+                await channel.CreateThreadAsync("Test report thread", channel is INewsChannel ? ThreadType.NewsThread : ThreadType.PublicThread);
+            }
         }
         catch (Exception ex)
         {
@@ -481,7 +486,254 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
         await _db.SaveChangesAsync();
 
         await RespondAsync(embed: new EmbedBuilder()
-            .WithDescription($"Emote for `{type}` set to {emoteStr}").Build(),
+            .WithDescription($"Emote for `{type}` has been set to {emoteStr}").Build(),
+                ephemeral: true);
+    }
+
+    [SlashCommand("threshold", "Get or set the threshold of how much of Stadium car time should be accepted.")]
+    public async Task Threshold(
+        [Summary(description: "Format: 0.5/0.02/1 (50% Stadium car, 2% Stadium car, ...)"), MinValue(0.01), MaxValue(1)] double? value = null,
+        bool reset = false)
+    {
+        var config = default(ReportConfiguration);
+
+        if (Context.User is IGuildUser guildUser)
+        {
+            if (!guildUser.GuildPermissions.ManageChannels)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You need the `Manage Channels` permission to use this command.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            var reportChannel = await _db.ReportChannels
+                .Include(x => x.Configuration)
+                .FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
+
+            if (reportChannel is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("This server is not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            config = reportChannel.Configuration;
+        }
+        else if (Context.Channel is IDMChannel)
+        {
+            var reportUser = await _db.ReportUsers
+                .Include(x => x.Configuration)
+                .FirstOrDefaultAsync(c => c.UserId == Context.User.Id);
+
+            if (reportUser is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You are not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            config = reportUser.Configuration;
+        }
+
+        if (config is null)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("Not subscribed to UOTD reports.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        if (reset)
+        {
+            var hasBeenReset = false;
+
+            if (config.Threshold != 0.5f)
+            {
+                config.Threshold = 0.5f;
+                hasBeenReset = true;
+                await _db.SaveChangesAsync();
+            }
+
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription(hasBeenReset
+                ? $"Threshold for reports has been reset to `{0.5f:P2}`."
+                : $"Threshold for reports is already at default `{0.5f:P2}`.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        if (value is null)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription($"Threshold for reports is `{config.Threshold:P2}`.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        config.Threshold = (float)value.Value;
+
+        await _db.SaveChangesAsync();
+
+        await RespondAsync(embed: new EmbedBuilder()
+            .WithDescription($"Threshold for reports has been set to `{config.Threshold:P2}`").Build(),
+                ephemeral: true);
+    }
+
+    [SlashCommand("ping", "Get or set who to ping on UOTD reports.")]
+    public async Task Ping(
+        IRole? role = null,
+        [Summary(description: "Remove the role from ping?")] bool remove = false,
+        bool reset = false)
+    {
+        var config = default(ReportConfiguration);
+
+        if (Context.User is IGuildUser guildUser)
+        {
+            if (!guildUser.GuildPermissions.ManageChannels)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You need the `Manage Channels` permission to use this command.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            var reportChannel = await _db.ReportChannels
+                .Include(x => x.Configuration)
+                .FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
+
+            if (reportChannel is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("This server is not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            config = reportChannel.Configuration;
+        }
+        else if (Context.Channel is IDMChannel)
+        {
+            var reportUser = await _db.ReportUsers
+                .Include(x => x.Configuration)
+                .FirstOrDefaultAsync(c => c.UserId == Context.User.Id);
+
+            if (reportUser is null)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You are not subscribed to UOTD reports.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            config = reportUser.Configuration;
+        }
+
+        if (config is null)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("Not subscribed to UOTD reports.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        if (reset)
+        {
+            if (config.PingRoles.Count == 0)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("Nobody is being pinged when report happens.").Build(),
+                    ephemeral: true);
+                return;
+            }
+
+            config.PingRoles = [];
+            await _db.SaveChangesAsync();
+
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("Removed every role from being pinged.").Build(),
+                ephemeral: true);
+            return;
+        }
+
+        if (role is null)
+        {
+            if (remove)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("You need to specify a role to remove.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            if (config.PingRoles.Count == 0)
+            {
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription("Nobody is being pinged when report happens.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("These roles are being pinged:");
+
+            foreach (var roleId in config.PingRoles)
+            {
+                var r = Context.Guild.GetRole(roleId);
+
+                if (r is not null)
+                {
+                    sb.AppendLine(r.Mention);
+                }
+            }
+
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription(sb.ToString()).Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        if (config.PingRoles.Contains(role.Id))
+        {
+            if (remove)
+            {
+                var newRolePingsAfterRemoval = new List<ulong>(config.PingRoles);
+                newRolePingsAfterRemoval.Remove(role.Id);
+
+                config.PingRoles = newRolePingsAfterRemoval;
+                await _db.SaveChangesAsync();
+
+                await RespondAsync(embed: new EmbedBuilder()
+                    .WithDescription($"Role {role.Mention} is no longer being pinged.").Build(),
+                        ephemeral: true);
+                return;
+            }
+
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription($"Role {role.Mention} is already being pinged.").Build(),
+                    ephemeral: true);
+            return;
+        }
+        else if (remove)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription($"Role {role.Mention} is not being pinged, so cannot be removed.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
+        var newRolePings = new List<ulong>(config.PingRoles)
+        {
+            role.Id
+        };
+
+        config.PingRoles = newRolePings;
+        await _db.SaveChangesAsync();
+
+        await RespondAsync(embed: new EmbedBuilder()
+            .WithDescription($"Role {role.Mention} is now being pinged.").Build(),
                 ephemeral: true);
     }
 

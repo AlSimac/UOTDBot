@@ -77,27 +77,30 @@ internal sealed class TotdChecker
         }
 
         var dayInfo = month.Days[day - 1];
+        var mapUid = dayInfo.MapUid;
 
-        if (string.IsNullOrEmpty(dayInfo.MapUid))
+        if (string.IsNullOrEmpty(mapUid))
         {
             _logger.LogError("No TOTD found (empty map UID). Is Scheduler:StartTime too early?");
             return null;
         }
 
-        _logger.LogInformation("Found TOTD day {MonthDay} (MapUid: {MapUid})", dayInfo.MonthDay, dayInfo.MapUid);
+        _logger.LogInformation("Found TOTD day {MonthDay} (MapUid: {MapUid})", dayInfo.MonthDay, mapUid);
         _logger.LogDebug("TOTD details: {DayInfo}", day);
 
-        var mapModel = await _db.Maps.FirstOrDefaultAsync(x => x.MapUid == dayInfo.MapUid, cancellationToken);
+        _ = bool.TryParse(_config["ReportIfAlreadyInDB"], out var reportIfAlreadyInDb);
 
-        if (mapModel is not null)
+        var mapModel = await _db.Maps.FirstOrDefaultAsync(x => x.MapUid == mapUid, cancellationToken);
+
+        if (mapModel is not null && !reportIfAlreadyInDb)
         {
-            _logger.LogInformation("Map already exists in database (MapUid: {MapUid}). Nothing to report.", dayInfo.MapUid);
+            _logger.LogInformation("Map already exists in database (MapUid: {MapUid}). Nothing to report.", mapUid);
             return null;
         }
 
-        _logger.LogInformation("Checking map details (MapUid: {MapUid})...", dayInfo.MapUid);
+        _logger.LogInformation("Checking map details (MapUid: {MapUid})...", mapUid);
 
-        var mapInfo = await _nls.GetMapInfoAsync(dayInfo.MapUid, cancellationToken);
+        var mapInfo = await _nls.GetMapInfoAsync(mapUid, cancellationToken);
         
         _logger.LogInformation("Map details: {MapInfo}", mapInfo);
 
@@ -107,13 +110,45 @@ internal sealed class TotdChecker
 
         using var mapStream = await mapResponse.Content.ReadAsStreamAsync(cancellationToken);
 
-        var features = _carChecker.CheckMap(mapStream, out var isUotd);
+        var features = _carChecker.CheckMap(mapStream, out var isUotd, out var raceValidateGhost);
+
+        if (isUotd)
+        {
+            _logger.LogInformation("UOTD elements found. Checking the WR if it has a UOTD car...");
+
+            var carDistrib = features.CarDistribution = await _carChecker.DownloadAndCheckWrGhostAsync(
+                mapUid, features.DefaultCar, backupGhost: raceValidateGhost, cancellationToken);
+
+            if (carDistrib is not null)
+            {
+                _ = carDistrib.TryGetValue("CarSport", out var carSportDistribution);
+
+                var carSportLength = carSportDistribution?.TimeMilliseconds ?? 0;
+                var nonCarSportLength = carDistrib.Where(x => x.Key != "CarSport").Sum(x => x.Value.TimeMilliseconds);
+
+                if (nonCarSportLength == 0 || carSportLength + nonCarSportLength == 0)
+                {
+                    _logger.LogInformation("Map has only CarSport, definitely not an UOTD (MapUid: {MapUid}).", mapUid);
+                    isUotd = false;
+                }
+                else
+                {
+                    var nonStadDistrib = features.NonStadiumDistribution = nonCarSportLength / (float)(carSportLength + nonCarSportLength);
+
+                    if (nonStadDistrib < 0.01f)
+                    {
+                        _logger.LogInformation("Map has more than 99% of CarSport, definitely not an UOTD (MapUid: {MapUid}).", mapUid);
+                        isUotd = false;
+                    }
+                }
+            }
+        }
 
         _ = bool.TryParse(_config["AllowAllTOTD"], out var allowAllTotd);
 
         if (!allowAllTotd && !isUotd)
         {
-            _logger.LogInformation("Map is not an UOTD (MapUid: {MapUid}).", dayInfo.MapUid);
+            _logger.LogInformation("Map is not an UOTD (MapUid: {MapUid}).", mapUid);
             return null;
         }
 
@@ -127,7 +162,7 @@ internal sealed class TotdChecker
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get map info from trackmania.io (MapUid: {MapUid}).", dayInfo.MapUid);
+            _logger.LogWarning(ex, "Failed to get map info from trackmania.io (MapUid: {MapUid}).", mapUid);
         }
 
         var cupId = default(int?);
@@ -136,8 +171,8 @@ internal sealed class TotdChecker
         if (_timeProvider.GetUtcNow().Day == dayInfo.MonthDay)
         {
             try
-            { 
-                var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken);
+            {
+                var cotd = await _ncs.GetCurrentCupOfTheDayAsync(cancellationToken) ?? throw new Exception("No COTD at the moment while it should be.");
                 _logger.LogInformation("NadeoClubServices: {Cotd}", cotd);
                 cupId = cotd.Competition.Id;
             }
@@ -145,6 +180,11 @@ internal sealed class TotdChecker
             {
                 _logger.LogError(ex, "Failed to get current cup of the day.");
             }
+        }
+
+        if (mapModel is not null && reportIfAlreadyInDb)
+        {
+            return mapModel;
         }
 
         mapModel = new Models.Map

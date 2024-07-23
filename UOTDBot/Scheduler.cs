@@ -100,6 +100,7 @@ internal sealed class Scheduler : BackgroundService, IScheduler
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occured while checking for TOTD.");
+            throw;
         }
 
         if (map is not null)
