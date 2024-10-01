@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>1.1.7</Version>
+		<Version>1.1.8</Version>
 	</PropertyGroup>
 	
 	<PropertyGroup>
@@ -26,7 +26,7 @@
 	<ItemGroup>
 		<PackageReference Include="ByteSize" Version="2.1.2" />
 		<PackageReference Include="Discord.Net" Version="3.16.0" />
-		<PackageReference Include="GBX.NET" Version="2.0.8" />
+		<PackageReference Include="GBX.NET" Version="2.0.9" />
 		<PackageReference Include="GBX.NET.LZO" Version="2.1.1" />
 		<PackageReference Include="GBX.NET.ZLib" Version="1.1.0" />
 		<PackageReference Include="ManiaAPI.NadeoAPI" Version="2.0.0-beta2" />
