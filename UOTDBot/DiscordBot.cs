@@ -98,7 +98,7 @@ internal sealed class DiscordBot : IDiscordBot
             return null;
         }
 
-        return await msgChannel.SendMessageAsync(message, embed: embed, allowedMentions: new AllowedMentions(AllowedMentionTypes.Roles));
+        return await msgChannel.SendMessageAsync(message, embed: embed, allowedMentions: AllowedMentions.All);
     }
 
     public async Task<IThreadChannel?> CreateThreadAsync(ulong channelId, IMessage message, string name)
