@@ -13,7 +13,7 @@ internal sealed class Startup : IHostedService
     private readonly IServiceProvider _provider;
     private readonly IDiscordBot _bot;
     private readonly NadeoLiveServices _nls;
-    private readonly NadeoClubServices _ncs;
+    private readonly NadeoMeetServices _ncs;
     private readonly IConfiguration _config;
     private readonly ILogger<Startup> _logger;
 
@@ -21,7 +21,7 @@ internal sealed class Startup : IHostedService
         IServiceProvider provider,
         IDiscordBot bot,
         NadeoLiveServices nls,
-        NadeoClubServices ncs,
+        NadeoMeetServices ncs,
         IConfiguration config,
         ILogger<Startup> logger)
     {
