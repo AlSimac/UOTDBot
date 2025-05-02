@@ -1,7 +1,6 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
 using Discord;
-using ManiaAPI.NadeoAPI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -9,9 +8,11 @@ using UOTDBot;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-using Polly;
-using Polly.Contrib.WaitAndRetry;
 using ManiaAPI.TrackmaniaIO;
+using ManiaAPI.NadeoAPI.Extensions.Hosting;
+using Serilog.Sinks.SystemConsole.Themes;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 GBX.NET.Gbx.LZO = new GBX.NET.LZO.MiniLZO();
 GBX.NET.Gbx.ZLib = new GBX.NET.ZLib.ZLib();
@@ -21,24 +22,14 @@ var builder = Host.CreateDefaultBuilder(args);
 builder.ConfigureServices((context, services) =>
 {
     services.AddHttpClient<TotdChecker>()
-        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
-        ));
-
-    services.AddHttpClient<NadeoLiveServices>()
-        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
-        ));
-
-    services.AddHttpClient<NadeoClubServices>()
-        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
-        ));
+        .AddStandardResilienceHandler();
 
     services.AddHttpClient<TrackmaniaIO>()
-        .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(
-            Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromMilliseconds(100), retryCount: 5)
-        ));
+        .AddStandardResilienceHandler();
+    services.AddTransient(provider =>
+        new TrackmaniaIO(provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(TrackmaniaIO)), "UOTDBot by Poutrel and BigBang1112"));
+
+    services.AddNadeoAPI();
 
     services.AddSingleton(TimeProvider.System);
 
@@ -61,12 +52,6 @@ builder.ConfigureServices((context, services) =>
         //LocalizationManager = new JsonLocalizationManager("Data", "commands")
     }));
 
-    // Add Serilog
-    services.AddLogging(builder =>
-    {
-        builder.AddSerilog(dispose: true);
-    });
-
     // Add startup
     services.AddHostedService<Startup>();
     services.AddHostedService<Scheduler>();
@@ -78,23 +63,54 @@ builder.ConfigureServices((context, services) =>
     services.AddScoped<DiscordReporter>();
     services.AddScoped<UotdInitializer>();
 
-    // 01/01/2024 Add ManiaAPI.NadeoAPI
-    services.AddSingleton<NadeoLiveServices>(
-        provider => new(provider.GetRequiredService<HttpClient>()));
-    services.AddSingleton<NadeoClubServices>(
-        provider => new(provider.GetRequiredService<HttpClient>()));
-    services.AddSingleton<TrackmaniaIO>(
-        provider => new(provider.GetRequiredService<HttpClient>(), "UOTDBot by Poutrel and BigBang1112"));
+    services.AddSingleton(provider => typeof(Program).Assembly.GetName().Version ?? new Version());
 
-    services.AddSingleton<Version>(provider => typeof(Program).Assembly.GetName().Version ?? new Version());
+    Log.Logger = new LoggerConfiguration()
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(theme: AnsiConsoleTheme.Sixteen, applyThemeToRedirectedOutput: true)
+        .WriteTo.OpenTelemetry(options =>
+        {
+            options.Endpoint = context.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+            options.Protocol = context.Configuration["OTEL_EXPORTER_OTLP_PROTOCOL"]?.ToLowerInvariant() switch
+            {
+                "grpc" => Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc,
+                "http/protobuf" or null or "" => Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf,
+                _ => throw new NotSupportedException($"OTLP protocol {context.Configuration["OTEL_EXPORTER_OTLP_PROTOCOL"]} is not supported")
+            };
+            options.Headers = context.Configuration["OTEL_EXPORTER_OTLP_HEADERS"]?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Split('=', 2, StringSplitOptions.RemoveEmptyEntries))
+                .ToDictionary(x => x[0], x => x[1]) ?? [];
+        })
+        .CreateLogger();
 
+    services.AddSerilog();
+
+    services.AddOpenTelemetry()
+        .WithMetrics(options =>
+        {
+            options
+                .AddHttpClientInstrumentation()
+                .AddRuntimeInstrumentation()
+                .AddProcessInstrumentation()
+                .AddOtlpExporter();
+
+            options.AddMeter("System.Net.Http");
+        })
+        .WithTracing(options =>
+        {
+            if (context.HostingEnvironment.IsDevelopment())
+            {
+                options.SetSampler<AlwaysOnSampler>();
+            }
+
+            options
+                .AddHttpClientInstrumentation()
+                .AddEntityFrameworkCoreInstrumentation()
+                .AddOtlpExporter();
+        });
+    services.AddMetrics();
 });
-
-// Use Serilog
-builder.UseSerilog();
-
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console(outputTemplate: "[{SourceContext} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .CreateLogger();
 
 await builder.Build().RunAsync();

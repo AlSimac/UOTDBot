@@ -9,7 +9,7 @@ namespace UOTDBot;
 internal sealed class TotdChecker
 {
     private readonly NadeoLiveServices _nls;
-    private readonly NadeoClubServices _ncs;
+    private readonly NadeoMeetServices _ncs;
     private readonly TrackmaniaIO _tmio;
     private readonly HttpClient _http;
     private readonly CarChecker _carChecker;
@@ -20,7 +20,7 @@ internal sealed class TotdChecker
 
     public TotdChecker(
         NadeoLiveServices nls,
-        NadeoClubServices ncs,
+        NadeoMeetServices ncs,
         TrackmaniaIO tmio,
         HttpClient http,
         CarChecker carChecker,
@@ -116,7 +116,7 @@ internal sealed class TotdChecker
         {
             _logger.LogInformation("UOTD elements found. Checking the WR if it has a UOTD car...");
 
-            var carDistrib = features.CarDistribution = await _carChecker.DownloadAndCheckWrGhostAsync(
+            var carDistrib = features.CarDistribution = await _carChecker.DownloadAndCheckGhostsAsync(
                 mapUid, features.DefaultCar, backupGhost: raceValidateGhost, cancellationToken);
 
             if (carDistrib is not null)

@@ -67,6 +67,11 @@ internal sealed class Scheduler : BackgroundService, IScheduler
         var startTime = TimeSpan.Parse(_config.GetRequiredValue("Scheduler:StartTime"));
         var endTime = TimeSpan.Parse(_config.GetRequiredValue("Scheduler:EndTime"));
 
+        if (currentCestDateTime.Day == 1)
+        {
+            startTime = TimeSpan.Parse(_config.GetRequiredValue("Scheduler:StartTimeFirstDay"));
+        }
+
         if (timeOfDay < startTime || timeOfDay > endTime)
         {
             _fired = false;

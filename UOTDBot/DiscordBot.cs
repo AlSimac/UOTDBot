@@ -98,7 +98,7 @@ internal sealed class DiscordBot : IDiscordBot
             return null;
         }
 
-        return await msgChannel.SendMessageAsync(message, embed: embed);
+        return await msgChannel.SendMessageAsync(message, embed: embed, allowedMentions: AllowedMentions.All);
     }
 
     public async Task<IThreadChannel?> CreateThreadAsync(ulong channelId, IMessage message, string name)
@@ -139,6 +139,8 @@ internal sealed class DiscordBot : IDiscordBot
         {
             versionStr += " (beta)";
         }
+
+        versionStr += " (I can fail sometimes)";
 
         await _client.SetCustomStatusAsync(versionStr);
 
