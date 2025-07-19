@@ -724,6 +724,14 @@ public sealed class ReportModule : InteractionModuleBase<SocketInteractionContex
             return;
         }
 
+        if (config.PingRoles.Count >= 5)
+        {
+            await RespondAsync(embed: new EmbedBuilder()
+                .WithDescription("You can only ping up to 5 roles.").Build(),
+                    ephemeral: true);
+            return;
+        }
+
         var newRolePings = new List<ulong>(config.PingRoles)
         {
             role.Id
