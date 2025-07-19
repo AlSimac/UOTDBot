@@ -1,5 +1,8 @@
-﻿namespace UOTDBot.Models;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace UOTDBot.Models;
+
+[Index(nameof(UserId), IsUnique = true)]
 public sealed class ReportUser
 {
     public int Id { get; set; }

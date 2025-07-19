@@ -1,3 +1,8 @@
+# Debug phase
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+USER $APP_UID
+WORKDIR /app
+
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 ARG BUILD_CONFIGURATION=Release
 ARG TARGETARCH=x64
@@ -24,4 +29,5 @@ RUN apk add --no-cache \
     tzdata
 WORKDIR /app
 COPY --from=build /app .
+USER $APP_UID
 ENTRYPOINT ["./UOTDBot"]

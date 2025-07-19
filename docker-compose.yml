@@ -1,0 +1,47 @@
+services:
+
+  uotdbot:
+    image: ${DOCKER_REGISTRY-}uotdbot
+    build:
+      context: .
+      dockerfile: UOTDBot/Dockerfile
+    environment:
+      CONNECTIONSTRINGS__DEFAULTCONNECTION: Server=mariadb;Port=3306;Database=uotd_bot;User=root;
+      OTEL_SERVICE_NAME: UOTDBot
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://seq/ingest/otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  mariadb:
+    image: mariadb
+    command: --max_allowed_packet=32505856
+    environment:
+      TZ: CET
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  phpmyadmin:
+    image: beeyev/phpmyadmin-lightweight
+    ports:
+      - 9010:80
+    environment:
+      PMA_HOST: mariadb
+      PMA_USER: root
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  seq:
+    image: datalust/seq
+    restart: unless-stopped
+    ports:
+      - 8081:80
+    environment:
+      ACCEPT_EULA: Y
