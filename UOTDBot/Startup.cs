@@ -15,6 +15,7 @@ internal sealed class Startup : IHostedService
     private readonly NadeoLiveServices _nls;
     private readonly NadeoMeetServices _ncs;
     private readonly IConfiguration _config;
+    private readonly IHostEnvironment _environment;
     private readonly ILogger<Startup> _logger;
 
     public Startup(
@@ -23,6 +24,7 @@ internal sealed class Startup : IHostedService
         NadeoLiveServices nls,
         NadeoMeetServices ncs,
         IConfiguration config,
+        IHostEnvironment environment,
         ILogger<Startup> logger)
     {
         _provider = provider;
@@ -30,6 +32,7 @@ internal sealed class Startup : IHostedService
         _nls = nls;
         _ncs = ncs;
         _config = config;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -41,7 +44,7 @@ internal sealed class Startup : IHostedService
 
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>().Database;
 
-        if (db.IsRelational())
+        if (_environment.IsDevelopment() && db.IsRelational())
         {
             await db.MigrateAsync(cancellationToken);
         }

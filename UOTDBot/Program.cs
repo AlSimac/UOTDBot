@@ -13,6 +13,7 @@ using ManiaAPI.NadeoAPI.Extensions.Hosting;
 using Serilog.Sinks.SystemConsole.Themes;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 GBX.NET.Gbx.LZO = new GBX.NET.LZO.MiniLZO();
 GBX.NET.Gbx.ZLib = new GBX.NET.ZLib.ZLib();
@@ -27,7 +28,7 @@ builder.ConfigureServices((context, services) =>
     services.AddHttpClient<TrackmaniaIO>()
         .AddStandardResilienceHandler();
     services.AddTransient(provider =>
-        new TrackmaniaIO(provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(TrackmaniaIO)), "UOTDBot by Poutrel and BigBang1112"));
+        new TrackmaniaIO(provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(TrackmaniaIO)), "UOTDBot/1.0 (by Poutrel and BigBang1112)"));
 
     services.AddNadeoAPI();
 
@@ -35,7 +36,9 @@ builder.ConfigureServices((context, services) =>
 
     services.AddDbContext<AppDbContext>(options =>
     {
-        options.UseSqlite(context.Configuration.GetConnectionString("DefaultConnection"));
+        var connectionStr = context.Configuration.GetConnectionString("DefaultConnection");
+        options.UseMySql(connectionStr, ServerVersion.AutoDetect(connectionStr))
+            .ConfigureWarnings(w => w.Ignore(RelationalEventId.CommandExecuted));
     });
 
     // Configure Discord bot

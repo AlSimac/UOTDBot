@@ -1,5 +1,9 @@
-﻿namespace UOTDBot.Models;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace UOTDBot.Models;
+
+[Index(nameof(ChannelId), IsUnique = true)]
+[Index(nameof(GuildId))]
 public sealed class ReportChannel
 {
     public int Id { get; set; }

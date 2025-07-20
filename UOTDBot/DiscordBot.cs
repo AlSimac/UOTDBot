@@ -140,7 +140,7 @@ internal sealed class DiscordBot : IDiscordBot
             versionStr += " (beta)";
         }
 
-        versionStr += " (I can fail sometimes)";
+        //versionStr += " (I can fail sometimes)";
 
         await _client.SetCustomStatusAsync(versionStr);
 
