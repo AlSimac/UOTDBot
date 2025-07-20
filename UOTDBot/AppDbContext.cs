@@ -8,7 +8,7 @@ using UOTDBot.Models;
 
 namespace UOTDBot;
 
-public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
+public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
     private static readonly ValueComparer<Dictionary<string, string>> dictionaryStringStringValueComparer = new(
         (x, y) => x!.Count == y!.Count && !x.Except(y).Any(),
@@ -25,6 +25,7 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<ReportUser> ReportUsers { get; set; }
     public DbSet<ReportMessage> ReportMessages { get; set; }
     public DbSet<Car> Cars { get; set; }
+    public DbSet<ReportConfiguration> ReportConfiguration { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,10 +36,11 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
                 timeInt32 => timeInt32.TotalMilliseconds,
                 totalMs => new TimeInt32(totalMs));
 
-        modelBuilder
-            .Entity<ReportMessage>()
-            .Property(x => x.CreatedAt)
-            .HasConversion(new DateTimeOffsetToBinaryConverter());
+        // for migration from sqlite
+        //modelBuilder
+        //    .Entity<ReportMessage>()
+        //    .Property(x => x.CreatedAt)
+        //    .HasConversion(new DateTimeOffsetToBinaryConverter());
 
         modelBuilder.Entity<Car>().HasData(
             new Car { Id = "CarSport", DisplayName = "StadiumCar" },
@@ -67,6 +69,6 @@ public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
             .HasConversion(
                 x => JsonSerializer.Serialize(x, AppJsonContext.Default.MapFeatures),
                 x => JsonSerializer.Deserialize(x, AppJsonContext.Default.MapFeatures)!)
-            .HasMaxLength(byte.MaxValue);
+            .HasMaxLength(512);
     }
 }
